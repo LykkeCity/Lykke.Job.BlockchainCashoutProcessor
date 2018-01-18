@@ -21,7 +21,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             // keep the aggregate, but consider to add the aggregate, if saga will became
             // more complex
 
-            sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOperationCommand
+            sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand
             {
                 OperationId = evt.OperationId,
                 FromAddress = evt.HotWalletAddress,

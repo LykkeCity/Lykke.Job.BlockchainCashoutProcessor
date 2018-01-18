@@ -102,7 +102,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningEvents(typeof(CashoutStartedEvent))
                     .From(Self)
                     .On(defaultRoute)
-                    .PublishingCommands(typeof(BlockchainOperationsExecutor.Contract.Commands.StartOperationCommand))
+                    .PublishingCommands(typeof(BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand))
                     .To(BlockchainOperationsExecutorBoundedContext.Name)
                     .With(defaultPipeline));
         }
