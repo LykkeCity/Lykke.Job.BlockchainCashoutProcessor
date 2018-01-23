@@ -1,27 +1,35 @@
 ﻿using System;
-using ProtoBuf;
+using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
 {
-    [ProtoContract]
+    [MessagePackObject]
     public class CashoutStartedEvent
     {
-        [ProtoMember(1)]
+        [Key(0)]
         public Guid OperationId { get; set; }
+
+        [Key(1)]
+        public string BlockchainType { get; set; }
+
+        [Key(2)]
+        public string BlockchainAssetId { get; set; }
 
         /// <summary>
         /// Lykke asset ID.
         /// </summary>
-        [ProtoMember(2)]
+        [Key(3)]
         public string AssetId { get; set; }
 
-        [ProtoMember(3)]
+        [Key(4)]
         public string HotWalletAddress { get; set; }
 
-        [ProtoMember(4)]
+        [Key(5)]
         public string ToAddress { get; set; }
 
-        [ProtoMember(5)]
+        [Key(6)]
         public decimal Amount { get; set; }
+
+        
     }
 }

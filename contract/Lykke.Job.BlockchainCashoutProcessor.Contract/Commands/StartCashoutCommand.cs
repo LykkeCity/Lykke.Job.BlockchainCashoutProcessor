@@ -1,6 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
-using ProtoBuf;
+using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Commands
 {
@@ -8,32 +8,32 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Commands
     /// Command to start the cashout in the generic blockchain integration layer
     /// </summary>
     [PublicAPI]
-    [ProtoContract]
+    [MessagePackObject]
     public class StartCashoutCommand
     {
         /// <summary>
         /// Cashout operation ID.
         /// </summary>
-        [ProtoMember(1)]
+        [Key(0)]
         public Guid OperationId { get; set; }
 
         /// <summary>
         /// Lykke asset ID.
         /// </summary>
-        [ProtoMember(2)]
+        [Key(1)]
         public string AssetId { get; set; }
 
         /// <summary>
         /// Recipient address.
         /// </summary>
-        [ProtoMember(3)]
+        [Key(2)]
         public string ToAddress { get; set; }
 
         /// <summary>
         /// Amount of the funds to cashout.
         /// Should be positive number.
         /// </summary>
-        [ProtoMember(4)]
+        [Key(3)]
         public decimal Amount { get; set; }
     }
 }

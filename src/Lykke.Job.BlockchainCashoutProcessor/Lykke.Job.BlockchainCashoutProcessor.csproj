@@ -28,8 +28,8 @@
 
   <ItemGroup>
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.1.0" />
-    <PackageReference Include="Lykke.Cqrs" Version="0.1.16" />
-    <PackageReference Include="Lykke.Job.BlockchainOperationsExecutor.Contract" Version="4.1.2" />
+    <PackageReference Include="Lykke.Cqrs" Version="2.1.1" />
+    <PackageReference Include="Lykke.Job.BlockchainOperationsExecutor.Contract" Version="5.0.0" />
     <!-- #if azurequeuesub -->
     <PackageReference Include="Lykke.JobTriggers" Version="1.2.0" />
     <!-- #endif -->
@@ -40,7 +40,7 @@
     <!-- #endif -->
     <!-- #if rabbitpub || rabbitsub -->
     <PackageReference Include="Lykke.RabbitMqBroker" Version="4.3.1" />
-    <PackageReference Include="Lykke.Service.Assets.Client" Version="3.0.1" />
+    <PackageReference Include="Lykke.Service.Assets.Client" Version="3.0.3" />
     <!-- #endif -->
     <PackageReference Include="Lykke.SettingsReader" Version="1.1.4" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.1" />

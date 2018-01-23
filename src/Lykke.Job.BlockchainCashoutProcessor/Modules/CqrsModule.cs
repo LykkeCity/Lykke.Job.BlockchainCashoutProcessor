@@ -83,8 +83,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 new DefaultEndpointProvider(),
                 true,
                 Register.DefaultEndpointResolver(new RabbitMqConventionEndpointResolver(
-                    "RabbitMq", 
-                    "protobuf",
+                    "RabbitMq",
+                    "messagepack",
                     environment: "lykke")),
 
                 Register.BoundedContext(Self)
@@ -104,7 +104,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On(defaultRoute)
                     .PublishingCommands(typeof(BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand))
                     .To(BlockchainOperationsExecutorBoundedContext.Name)
-                    .With(defaultPipeline));
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(
+                        typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent),
+                        typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
+                    .From(BlockchainOperationsExecutorBoundedContext.Name)
+                    .On(defaultRoute));
         }
     }
 }
