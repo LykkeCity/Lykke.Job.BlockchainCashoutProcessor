@@ -60,7 +60,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                 Log = CreateLogWithSlack(services, appSettings);
 
                 builder.RegisterModule(new JobModule(
-                    appSettings.CurrentValue.Assets,
+                    appSettings.CurrentValue.Assets, 
+                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.ChaosKitty,
                     Log));
                 builder.RegisterModule(new RepositoriesModule(
                     appSettings.Nested(x => x.BlockchainCashoutProcessorJob.Db),
@@ -69,7 +70,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     appSettings.CurrentValue.BlockchainsIntegration));
                 builder.RegisterModule(new CqrsModule(
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Cqrs,
-                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.ChaosKitty,
                     Log));
 
                 builder.Populate(services);

@@ -2,8 +2,8 @@
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Chaos;
 using Lykke.Cqrs;
-using Lykke.Job.BlockchainCashoutProcessor.Core;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -19,13 +19,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     [UsedImplicitly]
     public class CashoutSaga
     {
+        private readonly IChaosKitty _chaosKitty;
         private readonly ILog _log;
         private readonly ICashoutRepository _cashoutRepository;
 
         public CashoutSaga(
+            IChaosKitty chaosKitty,
             ILog log, 
             ICashoutRepository cashoutRepository)
         {
+            _chaosKitty = chaosKitty;
             _log = log;
             _cashoutRepository = cashoutRepository;
         }
@@ -48,7 +51,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     evt.Amount, 
                     evt.AssetId));
 
-            ChaosKitty.Meow(evt.OperationId);
+            _chaosKitty.Meow(evt.OperationId);
 
             if (aggregate.State == CashoutState.Started)
             {
