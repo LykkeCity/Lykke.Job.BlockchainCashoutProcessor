@@ -10,6 +10,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -54,6 +55,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             // Command handlers
             builder.RegisterType<StartCashoutCommandsHandler>();
+            builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
 
             builder.Register(ctx => CreateEngine(ctx, messagingEngine))
                 .As<ICqrsEngine>()
@@ -88,6 +90,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(typeof(CashoutStartedEvent))
                     .With(defaultPipeline)
 
+                    .ListeningCommands(typeof(RegisterClientOperationFinishCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<RegisterClientOperationFinishCommandsHandler>()
+                    .PublishingEvents(typeof(ClientOperationFinishRegisteredEvent))
+                    .With(defaultPipeline)
+
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024),
 
                 Register.Saga<CashoutSaga>($"{Self}.saga")
@@ -102,6 +110,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent),
                         typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
                     .From(BlockchainOperationsExecutorBoundedContext.Name)
+                    .On(defaultRoute)
+                    .PublishingCommands(typeof(RegisterClientOperationFinishCommand))
+                    .To(Self)
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(typeof(ClientOperationFinishRegisteredEvent))
+                    .From(Self)
                     .On(defaultRoute));
         }
     }

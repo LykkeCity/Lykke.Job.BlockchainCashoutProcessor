@@ -3,6 +3,7 @@
     public enum CashoutState
     {
         Started,
-        OperationIsFinished
+        OperationIsFinished,
+        ClientOperationFinishIsRegistered
     }
 }

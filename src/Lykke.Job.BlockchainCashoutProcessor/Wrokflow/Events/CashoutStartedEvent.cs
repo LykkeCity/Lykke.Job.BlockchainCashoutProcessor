@@ -30,6 +30,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
         [Key(6)]
         public decimal Amount { get; set; }
 
-        
+        [Key(7)]
+        public Guid ClientId { get; set; }
     }
 }

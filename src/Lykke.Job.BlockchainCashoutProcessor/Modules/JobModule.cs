@@ -7,6 +7,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.Assets;
 using Lykke.Service.Assets.Client;
+using Lykke.Service.OperationsRepository.Client;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Modules
@@ -15,6 +16,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
     {
         private readonly AssetsSettings _assetsSettings;
         private readonly ChaosSettings _chaosSettings;
+        private readonly Settings.OperationsRepositoryServiceClientSettings _operationsRepositoryServiceSettings;
 
         private readonly ILog _log;
         // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
@@ -23,10 +25,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         public JobModule(
             AssetsSettings assetsSettings,
             ChaosSettings chaosSettings,
+            Settings.OperationsRepositoryServiceClientSettings operationsRepositoryServiceSettings,
             ILog log)
         {
             _assetsSettings = assetsSettings;
             _chaosSettings = chaosSettings;
+            _operationsRepositoryServiceSettings = operationsRepositoryServiceSettings;
             _log = log;
 
             _services = new ServiceCollection();
@@ -54,6 +58,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 AssetsCacheExpirationPeriod = _assetsSettings.CacheExpirationPeriod,
                 AssetPairsCacheExpirationPeriod = _assetsSettings.CacheExpirationPeriod
             });
+
+            builder.RegisterOperationsRepositoryClients(new OperationsRepositoryServiceClientSettings
+            {
+                ServiceUrl = _operationsRepositoryServiceSettings.ServiceUrl,
+                RequestTimeout = _operationsRepositoryServiceSettings.RequestTimeout
+            }, _log);
 
             builder.RegisterChaosKitty(_chaosSettings);
 

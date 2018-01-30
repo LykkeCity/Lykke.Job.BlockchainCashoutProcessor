@@ -61,7 +61,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 HotWalletAddress = hotWaletAddress,
                 ToAddress = command.ToAddress,
                 AssetId = command.AssetId,
-                Amount = command.Amount
+                Amount = command.Amount,
+                ClientId = command.ClientId
             });
 
             return CommandHandlingResult.Ok();
