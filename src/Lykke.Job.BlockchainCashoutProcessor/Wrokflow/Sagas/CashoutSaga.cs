@@ -4,6 +4,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
+using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
@@ -25,7 +26,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     [UsedImplicitly]
     public class CashoutSaga
     {
-        private static readonly string Self = BlockchainOperationsExecutorBoundedContext.Name;
+        private static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
 
         private readonly IChaosKitty _chaosKitty;
         private readonly ILog _log;
