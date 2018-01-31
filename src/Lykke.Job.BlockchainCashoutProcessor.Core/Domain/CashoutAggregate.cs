@@ -11,8 +11,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public DateTime StartMoment { get; }
         public DateTime? OperationFinishMoment { get; private set; }
+        public DateTime? ClientOperationFinishRegistrationMoment { get; private set; }
 
         public Guid OperationId { get; }
+        public Guid ClientId { get; }
         public string BlockchainType { get; }
         public string BlockchainAssetId { get; }
         public string HotWalletAddress { get; }
@@ -24,11 +26,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public decimal? TransactionAmount { get; private set; }
         public decimal? Fee { get; private set; }
         public string Error { get; private set; }
-
+        
         private CashoutAggregate(
             Guid operationId, 
-            string blockchainType,
-            string blockchainAssetId,
+            Guid clientId, 
+            string blockchainType, 
+            string blockchainAssetId, 
             string hotWalletAddress, 
             string toAddress, 
             decimal amount, 
@@ -37,6 +40,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             StartMoment = DateTime.UtcNow;
 
             OperationId = operationId;
+            ClientId = clientId;
             BlockchainType = blockchainType;
             BlockchainAssetId = blockchainAssetId;
             HotWalletAddress = hotWalletAddress;
@@ -54,7 +58,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             CashoutResult result,
             DateTime startMoment,
             DateTime? operationFinishMoment,
+            DateTime? clientOperationFinishRegistrationMoment,
             Guid operationId,
+            Guid clientId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress,
@@ -72,8 +78,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
             StartMoment = startMoment;
             OperationFinishMoment = operationFinishMoment;
+            ClientOperationFinishRegistrationMoment = clientOperationFinishRegistrationMoment;
 
             OperationId = operationId;
+            ClientId = clientId;
             BlockchainType = blockchainType;
             BlockchainAssetId = blockchainAssetId;
             HotWalletAddress = hotWalletAddress;
@@ -89,6 +97,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public static CashoutAggregate StartNew(
             Guid operationId,
+            Guid clientId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress, 
@@ -98,6 +107,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         {
             return new CashoutAggregate(
                 operationId,
+                clientId,
                 blockchainType,
                 blockchainAssetId,
                 hotWalletAddress, 
@@ -112,7 +122,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             CashoutResult result,
             DateTime startMoment,
             DateTime? operationFinishMoment,
+            DateTime? clientOperationFinishRegistrationMoment,
             Guid operationId,
+            Guid clientId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress,
@@ -130,7 +142,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 result,
                 startMoment,
                 operationFinishMoment,
+                clientOperationFinishRegistrationMoment,
                 operationId,
+                clientId,
                 blockchainType,
                 blockchainAssetId,
                 hotWalletAddress,
@@ -177,6 +191,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             return true;
         }
 
+        public bool OnClientOperationFinishRegisteredEvent()
+        {
+            if (!SwitchState(CashoutState.OperationIsFinished, CashoutState.ClientOperationFinishIsRegistered))
+            {
+                return false;
+            }
+
+            ClientOperationFinishRegistrationMoment = DateTime.UtcNow;
+
+            return true;
+        }
+
         private bool SwitchState(CashoutState expectedState, CashoutState nextState)
         {
             if (State < expectedState)
@@ -194,6 +220,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             State = nextState;
 
             return true;
-        }       
+        }
     }
 }

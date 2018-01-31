@@ -16,8 +16,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         public DateTime StartMoment { get; set; }
         public DateTime? OperationFinishMoment { get; set; }
+        public DateTime? ClientOperationFinishRegistrationMoment { get; set; }
 
         public Guid OperationId { get; set; }
+        public Guid ClientId { get; set; }
         public string BlockchainType { get; set; }
         public string BlockchainAssetId { get; set; }
         public string HotWalletAddress { get; set; }
@@ -28,9 +30,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         public string TransactionHash { get; set; }
         public decimal? TransactionAmount { get; set; }
         public decimal? Fee { get; set; }
-        
         public string Error { get; set; }
-
+        
         // ReSharper restore MemberCanBePrivate.Global
 
         #endregion
@@ -67,7 +68,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 Result = aggregate.Result,
                 StartMoment = aggregate.StartMoment,
                 OperationFinishMoment = aggregate.OperationFinishMoment,
+                ClientOperationFinishRegistrationMoment = aggregate.ClientOperationFinishRegistrationMoment,
                 OperationId = aggregate.OperationId,
+                ClientId = aggregate.ClientId,
                 BlockchainType = aggregate.BlockchainType,
                 BlockchainAssetId = aggregate.BlockchainAssetId,
                 HotWalletAddress = aggregate.HotWalletAddress,
@@ -89,7 +92,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 Result,
                 StartMoment,
                 OperationFinishMoment,
+                ClientOperationFinishRegistrationMoment,
                 OperationId,
+                ClientId,
                 BlockchainType,
                 BlockchainAssetId,
                 HotWalletAddress,

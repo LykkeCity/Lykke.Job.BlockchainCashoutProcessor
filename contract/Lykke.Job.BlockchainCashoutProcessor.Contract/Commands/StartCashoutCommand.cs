@@ -35,5 +35,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Commands
         /// </summary>
         [Key(3)]
         public decimal Amount { get; set; }
+
+        /// <summary>
+        /// Lykke client ID.
+        /// </summary>
+        [Key(4)]
+        public Guid ClientId { get; set; }
     }
 }
