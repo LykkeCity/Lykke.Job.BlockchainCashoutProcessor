@@ -29,9 +29,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(RegisterClientOperationFinishCommand command, IEventPublisher publisher)
         {
-#if DEBUG
+
             _log.WriteInfo(nameof(RegisterClientOperationFinishCommand), command, "");
-#endif
+
             await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
                 command.ClientId.ToString(),
                 command.OperationId.ToString(),

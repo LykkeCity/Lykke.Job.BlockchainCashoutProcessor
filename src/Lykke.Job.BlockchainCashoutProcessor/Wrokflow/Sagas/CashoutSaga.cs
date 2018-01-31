@@ -45,9 +45,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(CashoutStartedEvent evt, ICommandSender sender)
         {
-#if DEBUG
+
             _log.WriteInfo(nameof(CashoutStartedEvent), evt, "");
-#endif
+
 
             var aggregate = await _cashoutRepository.GetOrAddAsync(
                 evt.OperationId,
@@ -84,9 +84,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt, ICommandSender sender)
         {
-#if DEBUG
+
             _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
-#endif
+
             try
             {
                 var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
@@ -121,9 +121,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent evt, ICommandSender sender)
         {
-#if DEBUG
+
             _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, "");
-#endif
+
             try
             {
                 var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
@@ -149,9 +149,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(ClientOperationFinishRegisteredEvent evt, ICommandSender sender)
         {
-#if DEBUG
+
             _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, "");
-#endif
+
             try
             {
                 var aggregate = await _cashoutRepository.GetAsync(evt.OperationId);
