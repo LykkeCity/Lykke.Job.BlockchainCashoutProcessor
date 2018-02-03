@@ -150,7 +150,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         private async Task Handle(ClientOperationFinishRegisteredEvent evt, ICommandSender sender)
         {
 
-            _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, "");
+            _log.WriteInfo(nameof(ClientOperationFinishRegisteredEvent), evt, "");
 
             try
             {
@@ -163,7 +163,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             }
             catch (Exception ex)
             {
-                _log.WriteError(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, ex);
+                _log.WriteError(nameof(ClientOperationFinishRegisteredEvent), evt, ex);
                 throw;
             }
         }
