@@ -58,6 +58,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<StartCashoutCommandsHandler>();
             builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
 
+            // Projections
+            builder.RegisterType<ClientOperationsProjection>();
+
             builder.Register(ctx => CreateEngine(ctx, messagingEngine))
                 .As<ICqrsEngine>()
                 .SingleInstance()
@@ -99,7 +102,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
                     .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
                     .From(BlockchainOperationsExecutorBoundedContext.Name)
-                    .On(defaultRoute)
+                    .On("client-operations")
                     .WithProjection(typeof(ClientOperationsProjection), BlockchainOperationsExecutorBoundedContext.Name)
 
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024),

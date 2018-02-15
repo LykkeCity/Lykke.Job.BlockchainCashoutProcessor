@@ -23,7 +23,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder.Register(c => CashoutRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
-                .As<ICashoutRepository>();
+                .As<ICashoutRepository>()
+                .SingleInstance();
         }
     }
 }
