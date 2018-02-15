@@ -30,10 +30,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(StartCashoutCommand command, IEventPublisher publisher)
         {
-
             _log.WriteInfo(nameof(StartCashoutCommand), command, "");
-
-
+            
             var asset = await _assetsService.TryGetAssetAsync(command.AssetId);
 
             if (asset == null)

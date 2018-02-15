@@ -4,9 +4,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
-using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
@@ -17,17 +15,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     /// -> CashoutStartedEvent
     ///     -> BlockchainOperationsExecutor : StartOperationCommand
     /// -> BlockchainOperationsExecutor : OperationCompletedEvent | OperationFailedEvent
-    ///     if  -> OperationCompletedEvent
-    ///     {
-    ///             -> RegisterClientOperationFinishCommand
-    ///         -> ClientOperationFinishRegisteredEvent
-    ///     }
     /// </summary>
     [UsedImplicitly]
     public class CashoutSaga
     {
-        private static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
-
         private readonly IChaosKitty _chaosKitty;
         private readonly ILog _log;
         private readonly ICashoutRepository _cashoutRepository;
@@ -45,10 +36,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(CashoutStartedEvent evt, ICommandSender sender)
         {
-
             _log.WriteInfo(nameof(CashoutStartedEvent), evt, "");
-
-
+            
             var aggregate = await _cashoutRepository.GetOrAddAsync(
                 evt.OperationId,
                 () => CashoutAggregate.StartNew(
@@ -84,7 +73,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt, ICommandSender sender)
         {
-
             _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
 
             try
@@ -99,16 +87,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
                 if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee))
                 {
-                    sender.SendCommand(new RegisterClientOperationFinishCommand
-                    {
-                        OperationId = aggregate.OperationId,
-                        TransactionHash = aggregate.TransactionHash,
-                        ClientId = aggregate.ClientId
-                    }, Self);
+                    await _cashoutRepository.SaveAsync(aggregate);
 
                     _chaosKitty.Meow(evt.OperationId);
-
-                    await _cashoutRepository.SaveAsync(aggregate);
                 }
             }
             catch (Exception ex)
@@ -121,7 +102,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent evt, ICommandSender sender)
         {
-
             _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, "");
 
             try
@@ -137,6 +117,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 if (aggregate.OnOperationFailed(evt.Error))
                 {
                     await _cashoutRepository.SaveAsync(aggregate);
+
+                    _chaosKitty.Meow(evt.OperationId);
                 }
             }
             catch (Exception ex)
@@ -146,26 +128,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             }
         }
 
+        [Obsolete("Should be removed with next release")]
         [UsedImplicitly]
-        private async Task Handle(ClientOperationFinishRegisteredEvent evt, ICommandSender sender)
+        private Task Handle(ClientOperationFinishRegisteredEvent evt, ICommandSender sender)
         {
-
-            _log.WriteInfo(nameof(ClientOperationFinishRegisteredEvent), evt, "");
-
-            try
-            {
-                var aggregate = await _cashoutRepository.GetAsync(evt.OperationId);
-
-                if (aggregate.OnClientOperationFinishRegisteredEvent())
-                {
-                    await _cashoutRepository.SaveAsync(aggregate);
-                }
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(ClientOperationFinishRegisteredEvent), evt, ex);
-                throw;
-            }
+            return Task.CompletedTask;
         }
     }
 }

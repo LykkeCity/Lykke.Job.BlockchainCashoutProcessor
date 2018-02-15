@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Autofac;
 using Common.Log;
-
 using Inceptum.Messaging;
 using Inceptum.Messaging.Contract;
 using Inceptum.Messaging.RabbitMq;
@@ -13,6 +12,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 using Lykke.Messaging;
@@ -97,6 +97,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(typeof(ClientOperationFinishRegisteredEvent))
                     .With(defaultPipeline)
 
+                    .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
+                    .From(BlockchainOperationsExecutorBoundedContext.Name)
+                    .On(defaultRoute)
+                    .WithProjection(typeof(ClientOperationsProjection), BlockchainOperationsExecutorBoundedContext.Name)
+
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024),
 
                 Register.Saga<CashoutSaga>($"{Self}.saga")
@@ -112,13 +117,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
                     .From(BlockchainOperationsExecutorBoundedContext.Name)
                     .On(defaultRoute)
-                    .PublishingCommands(typeof(RegisterClientOperationFinishCommand))
-                    .To(Self)
-                    .With(defaultPipeline)
 
                     .ListeningEvents(typeof(ClientOperationFinishRegisteredEvent))
                     .From(Self)
                     .On(defaultRoute));
+
+
         }
     }
 }

@@ -3,6 +3,7 @@ using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
 {
+    [Obsolete("Should be removed with next release")]
     [MessagePackObject]
     public class RegisterClientOperationFinishCommand
     {
