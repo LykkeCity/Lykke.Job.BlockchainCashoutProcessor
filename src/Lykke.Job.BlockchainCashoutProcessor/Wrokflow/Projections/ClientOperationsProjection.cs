@@ -22,7 +22,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
             ICashOperationsRepositoryClient clientOperationsRepositoryClient)
         {
             _chaosKitty = chaosKitty;
-            _log = log;
+            _log = log.CreateComponentScope(nameof(ClientOperationsProjection));
             _cashoutRepository = cashoutRepository;
             _clientOperationsRepositoryClient = clientOperationsRepositoryClient;
         }
@@ -30,7 +30,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
         [UsedImplicitly]
         public async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt)
         {
-            _log.WriteInfo($"{nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent)} Projection", evt, "");
+            _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
+
             try
             {
 
