@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
@@ -30,21 +31,29 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
         public async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt)
         {
             _log.WriteInfo($"{nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent)} Projection", evt, "");
-
-            var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-
-            if (aggregate == null)
+            try
             {
-                // This is not a cashout operation
-                return;
+
+                var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
+
+                if (aggregate == null)
+                {
+                    // This is not a cashout operation
+                    return;
+                }
+
+                await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
+                    aggregate.ClientId.ToString(),
+                    aggregate.OperationId.ToString(),
+                    evt.TransactionHash);
+
+                _chaosKitty.Meow(evt.OperationId);
             }
-
-            await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
-                aggregate.ClientId.ToString(),
-                aggregate.OperationId.ToString(),
-                evt.TransactionHash);
-
-            _chaosKitty.Meow(evt.OperationId);
+            catch (Exception ex)
+            {
+                _log.WriteError(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, ex);
+                throw;
+            }
         }
     }
 }
