@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
@@ -9,6 +10,7 @@ using Lykke.Service.OperationsRepository.Client.Abstractions.CashOperations;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
+    [Obsolete("Should be removed with next release")]
     [UsedImplicitly]
     public class RegisterClientOperationFinishCommandsHandler
     {
@@ -29,7 +31,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(RegisterClientOperationFinishCommand command, IEventPublisher publisher)
         {
-
             _log.WriteInfo(nameof(RegisterClientOperationFinishCommand), command, "");
 
             await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
