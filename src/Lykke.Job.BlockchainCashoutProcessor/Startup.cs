@@ -63,12 +63,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     appSettings.CurrentValue.Assets, 
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.ChaosKitty,
                     appSettings.CurrentValue.OperationsRepositoryServiceClient,
+                    appSettings.CurrentValue.MatchingEngineClient,
                     Log));
                 builder.RegisterModule(new RepositoriesModule(
                     appSettings.Nested(x => x.BlockchainCashoutProcessorJob.Db),
                     Log));
                 builder.RegisterModule(new BlockchainsModule(
-                    appSettings.CurrentValue.BlockchainsIntegration));
+                    appSettings.CurrentValue.BlockchainsIntegration,
+                    appSettings.CurrentValue.BlockchainWalletsServiceClient));
                 builder.RegisterModule(new CqrsModule(
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Cqrs,
                     Log));

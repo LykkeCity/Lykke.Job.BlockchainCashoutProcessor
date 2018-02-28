@@ -31,7 +31,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         public decimal? TransactionAmount { get; set; }
         public decimal? Fee { get; set; }
         public string Error { get; set; }
-        
+        public DateTime? MatchingEngineEnrollementMoment { get; private set; }
+        public Guid? ToClientId { get; private set; }
+        public Guid? CrossClientOperationId { get; private set; }
+
         // ReSharper restore MemberCanBePrivate.Global
 
         #endregion
@@ -80,7 +83,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 TransactionHash = aggregate.TransactionHash,
                 TransactionAmount = aggregate.TransactionAmount,
                 Fee = aggregate.Fee,
-                Error = aggregate.Error
+                Error = aggregate.Error,
+                MatchingEngineEnrollementMoment = aggregate.MatchingEngineEnrollementMoment,
+                ToClientId = aggregate.ToClientId,
+                CrossClientOperationId = aggregate.CrossClientOperationId
             };
         }
 
@@ -104,7 +110,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 TransactionHash,
                 TransactionAmount,
                 Fee,
-                Error);
+                Error,
+                MatchingEngineEnrollementMoment,
+                ToClientId,
+                CrossClientOperationId);
         }
 
         #endregion

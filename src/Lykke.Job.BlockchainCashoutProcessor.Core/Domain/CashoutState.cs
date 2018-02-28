@@ -7,6 +7,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         Started,
         OperationIsFinished,
         [Obsolete("Should be removed with next release")]
-        ClientOperationFinishIsRegistered
+        ClientOperationFinishIsRegistered,
+        StartedCrossClient,
+        EnrolledToMatchingEngine
     }
 }

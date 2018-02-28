@@ -7,6 +7,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Service.Assets.Client;
+using Lykke.Service.BlockchainWallets.Client;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
@@ -16,15 +17,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         private readonly ILog _log;
         private readonly IHotWalletsProvider _hotWalletProvider;
         private readonly IAssetsServiceWithCache _assetsService;
+        private readonly IBlockchainWalletsClient _walletsClient;
 
         public StartCashoutCommandsHandler(
             ILog log,
             IHotWalletsProvider hotWalletProvider,
-            IAssetsServiceWithCache assetsService)
+            IAssetsServiceWithCache assetsService,
+            IBlockchainWalletsClient walletsClient)
         {
             _log = log;
             _hotWalletProvider = hotWalletProvider;
             _assetsService = assetsService;
+            _walletsClient = walletsClient;
         }
 
         [UsedImplicitly]
@@ -49,19 +53,40 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 throw new InvalidOperationException("BlockchainIntegrationLayerAssetId of the asset is not configured");
             }
 
-            var hotWaletAddress = _hotWalletProvider.GetHotWalletAddress(asset.BlockchainIntegrationLayerId);
+            string toAddress = command.ToAddress;
+            string hotWaletAddress = _hotWalletProvider.GetHotWalletAddress(asset.BlockchainIntegrationLayerId);
+            Guid? clientId = await _walletsClient.TryGetClientIdAsync(asset.BlockchainIntegrationLayerId,
+                asset.BlockchainIntegrationLayerAssetId, toAddress);
 
-            publisher.PublishEvent(new CashoutStartedEvent
+            if (!clientId.HasValue)
             {
-                OperationId = command.OperationId,
-                BlockchainType = asset.BlockchainIntegrationLayerId,
-                BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
-                HotWalletAddress = hotWaletAddress,
-                ToAddress = command.ToAddress,
-                AssetId = command.AssetId,
-                Amount = command.Amount,
-                ClientId = command.ClientId
-            });
+                publisher.PublishEvent(new CashoutStartedEvent
+                {
+                    OperationId = command.OperationId,
+                    BlockchainType = asset.BlockchainIntegrationLayerId,
+                    BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
+                    HotWalletAddress = hotWaletAddress,
+                    ToAddress = toAddress,
+                    AssetId = command.AssetId,
+                    Amount = command.Amount,
+                    ClientId = command.ClientId
+                });
+            }
+            else //CrossClient Cashout
+            {
+                publisher.PublishEvent(new CrossClientCashoutStartedEvent
+                {
+                    OperationId = command.OperationId,
+                    BlockchainType = asset.BlockchainIntegrationLayerId,
+                    BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
+                    ToAddress = toAddress,
+                    HotWalletAddress = hotWaletAddress,
+                    AssetId = command.AssetId,
+                    Amount = command.Amount,
+                    FromClientId = command.ClientId,
+                    ToClientId = clientId.Value
+                });
+            }
 
             return CommandHandlingResult.Ok();
         }

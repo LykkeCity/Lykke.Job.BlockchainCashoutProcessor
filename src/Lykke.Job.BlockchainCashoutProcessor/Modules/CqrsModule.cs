@@ -55,7 +55,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             // Command handlers
             builder.RegisterType<StartCashoutCommandsHandler>();
+            builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
+            builder.RegisterType<ClientOperationsProjection>();
 
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
@@ -90,7 +92,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningCommands(typeof(StartCashoutCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<StartCashoutCommandsHandler>()
-                    .PublishingEvents(typeof(CashoutStartedEvent))
+                    .PublishingEvents(
+                        typeof(CashoutStartedEvent),
+                        typeof(CrossClientCashoutStartedEvent))
                     .With(defaultPipeline)
 
                     .ListeningCommands(typeof(RegisterClientOperationFinishCommand))
@@ -104,14 +108,35 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On("client-operations")
                     .WithProjection(typeof(ClientOperationsProjection), BlockchainOperationsExecutorBoundedContext.Name)
 
+                    .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
+                    .From(Self)
+                    .On("client-operations")
+                    .WithProjection(typeof(ClientOperationsProjection), Self)
+
+                    .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<EnrollToMatchingEngineCommandsHandler>()
+                    .PublishingEvents(typeof(CashinEnrolledToMatchingEngineEvent))
+                    .With(defaultPipeline)
+
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024),
 
                 Register.Saga<CashoutSaga>($"{Self}.saga")
-                    .ListeningEvents(typeof(CashoutStartedEvent))
+                    .ListeningEvents(
+                        typeof(CashoutStartedEvent)
+                        )
                     .From(Self)
                     .On(defaultRoute)
-                    .PublishingCommands(typeof(BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand))
+                    .PublishingCommands(
+                        typeof(BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand))
                     .To(BlockchainOperationsExecutorBoundedContext.Name)
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(typeof(CrossClientCashoutStartedEvent))
+                    .From(Self)
+                    .On(defaultRoute)
+                    .PublishingCommands(typeof(EnrollToMatchingEngineCommand))
+                    .To(Self)
                     .With(defaultPipeline)
 
                     .ListeningEvents(
@@ -121,6 +146,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On(defaultRoute)
 
                     .ListeningEvents(typeof(ClientOperationFinishRegisteredEvent))
+                    .From(Self)
+                    .On(defaultRoute)
+
+                    .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .From(Self)
                     .On(defaultRoute));
 
