@@ -57,7 +57,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<StartCashoutCommandsHandler>();
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
-            builder.RegisterType<ClientOperationsProjection>();
+            builder.RegisterType<CrossClientOperationsProjection>();
 
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
@@ -110,8 +110,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .From(Self)
-                    .On("client-operations")
-                    .WithProjection(typeof(ClientOperationsProjection), Self)
+                    .On("cross-client-operations")
+                    .WithProjection(typeof(CrossClientOperationsProjection), Self)
 
                     .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
                     .On(defaultRoute)

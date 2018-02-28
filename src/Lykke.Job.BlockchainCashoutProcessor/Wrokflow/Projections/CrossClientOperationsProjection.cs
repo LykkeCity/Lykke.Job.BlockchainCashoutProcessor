@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
 {
-    public class ClientOperationsProjection
+    public class CrossClientOperationsProjection
     {
         private readonly ILog _log;
         private readonly ICashoutRepository _cashoutRepository;
@@ -21,14 +21,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
         private readonly ICashOperationsRepositoryClient _clientOperationsRepositoryClient;
         private readonly IChaosKitty _chaosKitty;
 
-        public ClientOperationsProjection(
+        public CrossClientOperationsProjection(
             ILog log,
             ICashoutRepository cashoutRepository,
             IBlockchainWalletsClient walletsClient,
             ICashOperationsRepositoryClient clientOperationsRepositoryClient,
             IChaosKitty chaosKitty)
         {
-            _log = log.CreateComponentScope(nameof(ClientOperationsProjection));
+            _log = log.CreateComponentScope(nameof(CrossClientOperationsProjection));
             _cashoutRepository = cashoutRepository;
             _walletsClient = walletsClient;
             _clientOperationsRepositoryClient = clientOperationsRepositoryClient;
@@ -84,46 +84,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
                 throw;
             }
         }
-
-        //[UsedImplicitly]
-        //public async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt)
-        //{
-        //    _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
-
-        //    try
-        //    {
-        //        var aggregate = await _cashinRepository.GetAsync(evt.OperationId);
-
-        //        // Obtains clientId directly from the wallets, but not aggregate,
-        //        // to make projection independent on the aggregate state, since
-        //        // clientId in aggregate is initially not filled up.
-
-        //        // TODO: Add client cache for the walletsClient
-
-        //        var clientId = await _walletsClient.TryGetClientIdAsync(
-        //            aggregate.BlockchainType,
-        //            aggregate.BlockchainAssetId,
-        //            aggregate.DepositWalletAddress);
-
-        //        if (clientId == null)
-        //        {
-        //            throw new InvalidOperationException(
-        //                "Client ID for the blockchain deposit wallet address is not found");
-        //        }
-
-        //        await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
-        //            clientId.ToString(),
-        //            evt.OperationId.ToString(),
-        //            evt.TransactionHash);
-
-        //        _chaosKitty.Meow(evt.OperationId);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _log.WriteError(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, ex);
-        //        throw;
-        //    }
-        //}
     }
 }
 
