@@ -5,6 +5,8 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Modules;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
@@ -111,7 +113,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                         Amount = aggregate.Amount,
                         AssetId = aggregate.AssetId
                     },
-                        Self);
+                        CqrsModule.Self);
 
                     _chaosKitty.Meow(evt.OperationId);
                 }

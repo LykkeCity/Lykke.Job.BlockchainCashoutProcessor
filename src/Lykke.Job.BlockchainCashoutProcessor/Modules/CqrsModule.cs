@@ -20,7 +20,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 {
     public class CqrsModule : Module
     {
-        private static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
+        public static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
 
         private readonly CqrsSettings _settings;
         private readonly ILog _log;
