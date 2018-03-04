@@ -51,7 +51,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             // First level deduplication just to reduce traffic to the ME
             if (await _deduplicationRepository.IsExistsAsync(command.CashinOperationId))
             {
-                _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command.CashoutOperationId, "Deduplicated");
+                _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command.CashinOperationId, "Deduplicated");
 
                 // Just skips
                 return CommandHandlingResult.Ok();

@@ -26,9 +26,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public decimal? TransactionAmount { get; private set; }
         public decimal? Fee { get; private set; }
         public string Error { get; private set; }
-        public DateTime? MatchingEngineEnrollementMoment { get; private set; }
-        public Guid? ToClientId { get; private set; }
-        public Guid? CrossClientOperationId { get; private set; }
 
         private CashoutAggregate(
             Guid operationId, 
@@ -57,10 +54,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
             State = state;
             Result = CashoutResult.Unknown;
-            ToClientId = null;
-            MatchingEngineEnrollementMoment = enrollmentDate;
-            ToClientId = ToClientId;
-            CrossClientOperationId = crossClientOperationId;
         }
 
         private CashoutAggregate(
@@ -81,10 +74,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string transactionHash,
             decimal? transactionAmount,
             decimal? fee,
-            string error,
-            DateTime? enrollmentDate,
-            Guid? toClient,
-            Guid? crossClientOperationId)
+            string error)
         {
             Version = version;
             State = state;
@@ -107,9 +97,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             TransactionAmount = transactionAmount;
             Fee = fee;
             Error = error;
-            MatchingEngineEnrollementMoment = enrollmentDate;
-            ToClientId = ToClientId;
-            CrossClientOperationId = crossClientOperationId;
         }
 
         public static CashoutAggregate StartNew(
@@ -151,9 +138,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 hotWalletAddress,
                 toAddress,
                 amount,
-                assetId,
-                state: CashoutState.StartedCrossClient,
-                crossClientOperationId: Guid.NewGuid());
+                assetId);
         }
 
         public static CashoutAggregate Restore(
@@ -174,10 +159,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string transactionHash,
             decimal? transactionAmount,
             decimal? fee,
-            string error,
-            DateTime? enrollmentDate,
-            Guid? toClient,
-            Guid? crossClientOperationId)
+            string error)
         {
             return new CashoutAggregate(
                 version,
@@ -197,10 +179,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 transactionHash,
                 transactionAmount,
                 fee,
-                error,
-                enrollmentDate,
-                toClient,
-                crossClientOperationId
+                error
                 );
         }
 
@@ -246,20 +225,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             }
 
             ClientOperationFinishRegistrationMoment = DateTime.UtcNow;
-
-            return true;
-        }
-
-        public bool OnEnrolledToMatchingEngine(Guid toClientId)
-        {
-            if (!SwitchState(CashoutState.StartedCrossClient, CashoutState.EnrolledToMatchingEngine))
-            {
-                return false;
-            }
-
-            MatchingEngineEnrollementMoment = DateTime.UtcNow;
-
-            ToClientId = toClientId;
 
             return true;
         }

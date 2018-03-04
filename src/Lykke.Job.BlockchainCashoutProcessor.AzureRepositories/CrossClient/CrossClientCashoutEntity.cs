@@ -5,18 +5,15 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 {
-    internal class CashoutEntity : AzureTableEntity
+    internal class CrossClientCashoutEntity : AzureTableEntity
     {
         #region Fields
 
         // ReSharper disable MemberCanBePrivate.Global
 
-        public CashoutState State { get; set; }
-        public CashoutResult Result { get; set; }
-
+        public CrossClientCashoutState State { get; set; }
         public DateTime StartMoment { get; set; }
         public DateTime? OperationFinishMoment { get; set; }
-        public DateTime? ClientOperationFinishRegistrationMoment { get; set; }
 
         public Guid OperationId { get; set; }
         public Guid ClientId { get; set; }
@@ -27,10 +24,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         public decimal Amount { get; set; }
         public string AssetId { get; set; }
 
-        public string TransactionHash { get; set; }
-        public decimal? TransactionAmount { get; set; }
         public decimal? Fee { get; set; }
         public string Error { get; set; }
+        public DateTime? MatchingEngineEnrollementMoment { get; private set; }
+        public Guid ToClientId { get; private set; }
+        public Guid CashinOperationId { get; private set; }
 
         // ReSharper restore MemberCanBePrivate.Global
 
@@ -57,18 +55,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         #region Conversion
 
-        public static CashoutEntity FromDomain(CashoutAggregate aggregate)
+        public static CrossClientCashoutEntity FromDomain(CrossClientCashoutAggregate aggregate)
         {
-            return new CashoutEntity
+            return new CrossClientCashoutEntity
             {
                 ETag = string.IsNullOrEmpty(aggregate.Version) ? "*" : aggregate.Version,
                 PartitionKey = GetPartitionKey(aggregate.OperationId),
                 RowKey = GetRowKey(aggregate.OperationId),
                 State = aggregate.State,
-                Result = aggregate.Result,
                 StartMoment = aggregate.StartMoment,
                 OperationFinishMoment = aggregate.OperationFinishMoment,
-                ClientOperationFinishRegistrationMoment = aggregate.ClientOperationFinishRegistrationMoment,
                 OperationId = aggregate.OperationId,
                 ClientId = aggregate.ClientId,
                 BlockchainType = aggregate.BlockchainType,
@@ -77,22 +73,21 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 ToAddress = aggregate.ToAddress,
                 Amount = aggregate.Amount,
                 AssetId = aggregate.AssetId,
-                TransactionHash = aggregate.TransactionHash,
-                TransactionAmount = aggregate.TransactionAmount,
                 Fee = aggregate.Fee,
-                Error = aggregate.Error
+                Error = aggregate.Error,
+                MatchingEngineEnrollementMoment = aggregate.MatchingEngineEnrollementMoment,
+                ToClientId = aggregate.ToClientId,
+                CashinOperationId = aggregate.CashinOperationId
             };
         }
 
-        public CashoutAggregate ToDomain()
+        public CrossClientCashoutAggregate ToDomain()
         {
-            return CashoutAggregate.Restore(
+            return CrossClientCashoutAggregate.Restore(
                 ETag,
                 State,
-                Result,
                 StartMoment,
                 OperationFinishMoment,
-                ClientOperationFinishRegistrationMoment,
                 OperationId,
                 ClientId,
                 BlockchainType,
@@ -101,10 +96,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 ToAddress,
                 Amount,
                 AssetId,
-                TransactionHash,
-                TransactionAmount,
                 Fee,
-                Error);
+                Error,
+                MatchingEngineEnrollementMoment,
+                ToClientId,
+                CashinOperationId);
         }
 
         #endregion

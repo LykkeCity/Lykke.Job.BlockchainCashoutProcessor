@@ -16,14 +16,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
     public class CrossClientOperationsProjection
     {
         private readonly ILog _log;
-        private readonly ICashoutRepository _cashoutRepository;
+        private readonly ICrossClientCashoutRepository _cashoutRepository;
         private readonly IBlockchainWalletsClient _walletsClient;
         private readonly ICashOperationsRepositoryClient _clientOperationsRepositoryClient;
         private readonly IChaosKitty _chaosKitty;
 
         public CrossClientOperationsProjection(
             ILog log,
-            ICashoutRepository cashoutRepository,
+            ICrossClientCashoutRepository cashoutRepository,
             IBlockchainWalletsClient walletsClient,
             ICashOperationsRepositoryClient clientOperationsRepositoryClient,
             IChaosKitty chaosKitty)
@@ -54,8 +54,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
                 }
 
                 await _clientOperationsRepositoryClient.RegisterAsync(new CashInOutOperation(
-                    id: aggregate.CrossClientOperationId.ToString(),
-                    transactionId: aggregate.CrossClientOperationId.ToString(),
+                    id: aggregate.CashinOperationId.ToString(),
+                    transactionId: aggregate.CashinOperationId.ToString(),
                     dateTime: aggregate.StartMoment,
                     amount: (double)aggregate.Amount,
                     assetId: aggregate.AssetId,
@@ -76,7 +76,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
                     isHidden: false
                 ));
 
-                _chaosKitty.Meow(evt.CashoutOperationId);
+                _chaosKitty.Meow(evt.CashinOperationId);
             }
             catch (Exception ex)
             {
