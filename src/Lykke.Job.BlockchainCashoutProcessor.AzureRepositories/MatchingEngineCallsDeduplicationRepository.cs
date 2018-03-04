@@ -18,7 +18,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         {
             var storage = AzureTableStorage<MatchingEngineCallsDeduplicationEntity>.Create(
                 connectionString,
-                "CashinMatchinEngineCallsDeduplication",
+                "CrossClientCashoutMatchingEngineCallsDeduplication",
                 log);
 
             return new MatchingEngineCallsDeduplicationRepository(storage);
