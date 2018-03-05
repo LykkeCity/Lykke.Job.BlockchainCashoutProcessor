@@ -36,10 +36,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string toAddress, 
             decimal amount, 
             string assetId,
-            DateTime? enrollmentDate = null,
-            Guid? toClientId = null,
-            CashoutState state = CashoutState.Started,
-            Guid? crossClientOperationId = null)
+            CashoutState state = CashoutState.Started)
         {
             StartMoment = DateTime.UtcNow;
 
@@ -117,27 +114,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 hotWalletAddress, 
                 toAddress, 
                 amount, 
-                assetId);
-        }
-
-         public static CashoutAggregate StartNewCrossClient(
-            Guid operationId,
-            Guid clientId,
-            string blockchainType,
-            string blockchainAssetId,
-            string hotWalletAddress,
-            string toAddress,
-            decimal amount,
-            string assetId)
-        {
-            return new CashoutAggregate(
-                operationId,
-                clientId,
-                blockchainType,
-                blockchainAssetId,
-                hotWalletAddress,
-                toAddress,
-                amount,
                 assetId);
         }
 
