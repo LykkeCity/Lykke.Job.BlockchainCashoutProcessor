@@ -25,7 +25,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
         public CashoutSaga(
             IChaosKitty chaosKitty,
-            ILog log, 
+            ILog log,
             ICashoutRepository cashoutRepository)
         {
             _chaosKitty = chaosKitty;
@@ -86,7 +86,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             try
             {
                 var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-                
+
                 if (aggregate == null)
                 {
                     // This is not a cashout operation

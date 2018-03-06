@@ -26,7 +26,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public decimal? TransactionAmount { get; private set; }
         public decimal? Fee { get; private set; }
         public string Error { get; private set; }
-        
+
         private CashoutAggregate(
             Guid operationId, 
             Guid clientId, 
@@ -154,7 +154,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 transactionHash,
                 transactionAmount,
                 fee,
-                error);
+                error
+                );
         }
 
         public bool OnOperationCompleted(string transactionHash, decimal transactionAmount, decimal fee)
