@@ -35,8 +35,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string hotWalletAddress, 
             string toAddress, 
             decimal amount, 
-            string assetId,
-            CashoutState state = CashoutState.Started)
+            string assetId)
         {
             StartMoment = DateTime.UtcNow;
 
@@ -49,7 +48,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Amount = amount;
             AssetId = assetId;
 
-            State = state;
+            State = CashoutState.Started;
             Result = CashoutResult.Unknown;
         }
 

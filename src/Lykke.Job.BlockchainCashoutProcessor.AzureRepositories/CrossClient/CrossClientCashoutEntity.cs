@@ -1,7 +1,7 @@
 ﻿using System;
 using Common;
 using Lykke.AzureStorage.Tables;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 {
@@ -13,8 +13,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         public CrossClientCashoutState State { get; set; }
         public DateTime StartMoment { get; set; }
-        public DateTime? OperationFinishMoment { get; set; }
-
         public Guid OperationId { get; set; }
         public Guid ClientId { get; set; }
         public string BlockchainType { get; set; }
@@ -23,8 +21,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         public string ToAddress { get; set; }
         public decimal Amount { get; set; }
         public string AssetId { get; set; }
-
-        public decimal? Fee { get; set; }
         public string Error { get; set; }
         public DateTime? MatchingEngineEnrollementMoment { get; private set; }
         public Guid ToClientId { get; private set; }
@@ -64,7 +60,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 RowKey = GetRowKey(aggregate.OperationId),
                 State = aggregate.State,
                 StartMoment = aggregate.StartMoment,
-                OperationFinishMoment = aggregate.OperationFinishMoment,
                 OperationId = aggregate.OperationId,
                 ClientId = aggregate.ClientId,
                 BlockchainType = aggregate.BlockchainType,
@@ -73,8 +68,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 ToAddress = aggregate.ToAddress,
                 Amount = aggregate.Amount,
                 AssetId = aggregate.AssetId,
-                Fee = aggregate.Fee,
-                Error = aggregate.Error,
                 MatchingEngineEnrollementMoment = aggregate.MatchingEngineEnrollementMoment,
                 ToClientId = aggregate.ToClientId,
                 CashinOperationId = aggregate.CashinOperationId
@@ -87,7 +80,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 ETag,
                 State,
                 StartMoment,
-                OperationFinishMoment,
                 OperationId,
                 ClientId,
                 BlockchainType,
@@ -96,8 +88,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 ToAddress,
                 Amount,
                 AssetId,
-                Fee,
-                Error,
                 MatchingEngineEnrollementMoment,
                 ToClientId,
                 CashinOperationId);

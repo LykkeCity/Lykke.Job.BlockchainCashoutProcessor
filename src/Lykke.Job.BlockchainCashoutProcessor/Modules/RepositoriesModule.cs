@@ -2,6 +2,7 @@
 using Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.SettingsReader;
@@ -32,7 +33,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 .SingleInstance();
 
             builder.Register(c => MatchingEngineCallsDeduplicationRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
-                .As<IMatchingEngineCallsDeduplicationRepository>();
+                .As<IMatchingEngineCallsDeduplicationRepository>()
+                .SingleInstance();
         }
     }
 }

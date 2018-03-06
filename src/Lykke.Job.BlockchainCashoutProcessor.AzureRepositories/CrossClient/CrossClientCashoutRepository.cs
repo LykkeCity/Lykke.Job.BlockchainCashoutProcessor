@@ -4,7 +4,7 @@ using AzureStorage;
 using AzureStorage.Tables;
 using Common.Log;
 using JetBrains.Annotations;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.SettingsReader;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories

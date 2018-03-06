@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
 {
     public interface ICrossClientCashoutRepository
     {

@@ -55,10 +55,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             string toAddress = command.ToAddress;
             string hotWaletAddress = _hotWalletProvider.GetHotWalletAddress(asset.BlockchainIntegrationLayerId);
-            Guid? clientId = await _walletsClient.TryGetClientIdAsync(asset.BlockchainIntegrationLayerId,
+            Guid? recipientClient = await _walletsClient.TryGetClientIdAsync(asset.BlockchainIntegrationLayerId,
                 asset.BlockchainIntegrationLayerAssetId, toAddress);
 
-            if (!clientId.HasValue)
+            if (!recipientClient.HasValue)
             {
                 publisher.PublishEvent(new CashoutStartedEvent
                 {
@@ -84,7 +84,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                     AssetId = command.AssetId,
                     Amount = command.Amount,
                     FromClientId = command.ClientId,
-                    ToClientId = clientId.Value
+                    ToClientId = recipientClient.Value
                 });
             }
 

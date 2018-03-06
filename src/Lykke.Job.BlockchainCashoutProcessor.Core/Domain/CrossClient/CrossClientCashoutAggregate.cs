@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
 {
     public class CrossClientCashoutAggregate
     {
@@ -9,7 +9,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public CrossClientCashoutState State { get; private set; }
 
         public DateTime StartMoment { get; }
-        public DateTime? OperationFinishMoment { get; private set; }
 
         public Guid OperationId { get; }
         public Guid ClientId { get; }
@@ -19,9 +18,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public string ToAddress { get; }
         public decimal Amount { get; }
         public string AssetId { get; }
-
-        public decimal? Fee { get; private set; }
-        public string Error { get; private set; }
         public DateTime? MatchingEngineEnrollementMoment { get; private set; }
         public Guid ToClientId { get; private set; }
         public Guid CashinOperationId { get; private set; }
@@ -37,9 +33,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             decimal amount,
             string assetId,
             Guid toClientId,
-            Guid cashinOperationId,
-            DateTime? enrollmentDate = null,
-            CrossClientCashoutState state = CrossClientCashoutState.StartedCrossClient)
+            Guid cashinOperationId)
         {
             StartMoment = DateTime.UtcNow;
             Version = version;
@@ -52,9 +46,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Amount = amount;
             AssetId = assetId;
 
-            State = state;
+            State = CrossClientCashoutState.StartedCrossClient;
             ToClientId = toClientId;
-            MatchingEngineEnrollementMoment = enrollmentDate;
+            MatchingEngineEnrollementMoment = null;
             ToClientId = ToClientId;
             CashinOperationId = cashinOperationId;
         }
@@ -63,7 +57,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string version,
             CrossClientCashoutState state,
             DateTime startMoment,
-            DateTime? operationFinishMoment,
             Guid operationId,
             Guid clientId,
             string blockchainType,
@@ -72,8 +65,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string toAddress,
             decimal amount,
             string assetId,
-            decimal? fee,
-            string error,
             DateTime? enrollmentDate,
             Guid toClientId)
         {
@@ -81,7 +72,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             State = state;
 
             StartMoment = startMoment;
-            OperationFinishMoment = operationFinishMoment;
 
             OperationId = operationId;
             ClientId = clientId;
@@ -91,8 +81,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             ToAddress = toAddress;
             Amount = amount;
             AssetId = assetId;
-            Fee = fee;
-            Error = error;
             MatchingEngineEnrollementMoment = enrollmentDate;
             ToClientId = toClientId;
         }
@@ -126,7 +114,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string version,
             CrossClientCashoutState state,
             DateTime startMoment,
-            DateTime? operationFinishMoment,
             Guid operationId,
             Guid clientId,
             string blockchainType,
@@ -135,26 +122,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string toAddress,
             decimal amount,
             string assetId,
-            decimal? fee,
-            string error,
             DateTime? enrollmentDate,
-            Guid toClient,
+            Guid toClientId,
             Guid cashinOperationId)
         {
             return new CrossClientCashoutAggregate(
-                version, 
-                operationId, 
-                clientId, 
-                blockchainType, 
+                version,
+                state,
+                startMoment,
+                operationId,
+                clientId,
+                blockchainType,
                 blockchainAssetId,
-                hotWalletAddress, 
-                toAddress, 
-                amount, 
-                assetId, 
-                toClient, 
-                cashinOperationId,
-                enrollmentDate, 
-                state
+                hotWalletAddress,
+                toAddress,
+                amount,
+                assetId,
+                enrollmentDate,
+                toClientId
                 );
         }
 

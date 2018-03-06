@@ -1,7 +1,7 @@
 ﻿using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Service.BlockchainWallets.Client;
 using Lykke.Service.OperationsRepository.AutorestClient.Models;
