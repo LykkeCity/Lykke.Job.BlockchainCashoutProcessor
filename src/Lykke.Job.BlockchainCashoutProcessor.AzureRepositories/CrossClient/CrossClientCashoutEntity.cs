@@ -3,7 +3,7 @@ using Common;
 using Lykke.AzureStorage.Tables;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
+namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient
 {
     internal class CrossClientCashoutEntity : AzureTableEntity
     {
@@ -21,9 +21,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         public string ToAddress { get; set; }
         public decimal Amount { get; set; }
         public string AssetId { get; set; }
-        public string Error { get; set; }
         public DateTime? MatchingEngineEnrollementMoment { get; private set; }
-        public Guid ToClientId { get; private set; }
+        public Guid RecipientClientId { get; private set; }
         public Guid CashinOperationId { get; private set; }
 
         // ReSharper restore MemberCanBePrivate.Global
@@ -69,7 +68,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 Amount = aggregate.Amount,
                 AssetId = aggregate.AssetId,
                 MatchingEngineEnrollementMoment = aggregate.MatchingEngineEnrollementMoment,
-                ToClientId = aggregate.ToClientId,
+                RecipientClientId = aggregate.RecipientClientId,
                 CashinOperationId = aggregate.CashinOperationId
             };
         }
@@ -89,7 +88,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 Amount,
                 AssetId,
                 MatchingEngineEnrollementMoment,
-                ToClientId,
+                RecipientClientId,
                 CashinOperationId);
         }
 

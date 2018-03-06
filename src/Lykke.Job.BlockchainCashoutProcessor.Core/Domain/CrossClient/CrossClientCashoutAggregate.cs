@@ -19,8 +19,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
         public decimal Amount { get; }
         public string AssetId { get; }
         public DateTime? MatchingEngineEnrollementMoment { get; private set; }
-        public Guid ToClientId { get; private set; }
-        public Guid CashinOperationId { get; private set; }
+        public Guid RecipientClientId { get; }
+        public Guid CashinOperationId { get; }
 
         private CrossClientCashoutAggregate(
             string version,
@@ -32,7 +32,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
             string toAddress,
             decimal amount,
             string assetId,
-            Guid toClientId,
+            Guid recipientClientId,
             Guid cashinOperationId)
         {
             StartMoment = DateTime.UtcNow;
@@ -46,10 +46,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
             Amount = amount;
             AssetId = assetId;
 
-            State = CrossClientCashoutState.StartedCrossClient;
-            ToClientId = toClientId;
+            State = CrossClientCashoutState.Started;
+            RecipientClientId = recipientClientId;
             MatchingEngineEnrollementMoment = null;
-            ToClientId = ToClientId;
+            RecipientClientId = RecipientClientId;
             CashinOperationId = cashinOperationId;
         }
 
@@ -66,7 +66,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
             decimal amount,
             string assetId,
             DateTime? enrollmentDate,
-            Guid toClientId)
+            Guid recipientClientId,
+            Guid cashinOperationId)
         {
             Version = version;
             State = state;
@@ -82,7 +83,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
             Amount = amount;
             AssetId = assetId;
             MatchingEngineEnrollementMoment = enrollmentDate;
-            ToClientId = toClientId;
+            RecipientClientId = recipientClientId;
+            CashinOperationId = cashinOperationId;
         }
 
         public static CrossClientCashoutAggregate StartNewCrossClient(
@@ -94,7 +96,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
            string toAddress,
            decimal amount,
            string assetId,
-           Guid toClientId)
+           Guid RecipientClientId)
         {
             return new CrossClientCashoutAggregate(
                 "*",
@@ -106,7 +108,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
                 toAddress,
                 amount,
                 assetId,
-                toClientId,
+                RecipientClientId,
                 Guid.NewGuid());
         }
 
@@ -123,7 +125,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
             decimal amount,
             string assetId,
             DateTime? enrollmentDate,
-            Guid toClientId,
+            Guid recipientClientId,
             Guid cashinOperationId)
         {
             return new CrossClientCashoutAggregate(
@@ -139,20 +141,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
                 amount,
                 assetId,
                 enrollmentDate,
-                toClientId
-                );
+                recipientClientId,
+                cashinOperationId);
         }
 
-        public bool OnEnrolledToMatchingEngine(Guid toClientId)
+        public bool OnEnrolledToMatchingEngine()
         {
-            if (!SwitchState(CrossClientCashoutState.StartedCrossClient, CrossClientCashoutState.EnrolledToMatchingEngine))
+            if (!SwitchState(CrossClientCashoutState.Started, CrossClientCashoutState.EnrolledToMatchingEngine))
             {
                 return false;
             }
 
             MatchingEngineEnrollementMoment = DateTime.UtcNow;
-
-            ToClientId = toClientId;
 
             return true;
         }

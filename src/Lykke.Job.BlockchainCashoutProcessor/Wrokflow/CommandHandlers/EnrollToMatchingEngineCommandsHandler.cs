@@ -8,10 +8,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.MatchingEngine.Connector.Abstractions.Models;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.Service.BlockchainWallets.Client;
-using Lykke.Service.OperationsRepository.Client.Abstractions.CashOperations;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
@@ -21,31 +18,25 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
     {
         private readonly IChaosKitty _chaosKitty;
         private readonly ILog _log;
-        private readonly IBlockchainWalletsClient _walletsClient;
         private readonly IMatchingEngineCallsDeduplicationRepository _deduplicationRepository;
         private readonly IMatchingEngineClient _meClient;
-        private readonly ICashOperationsRepositoryClient _cashOperationsRepositoryClient;
 
         public EnrollToMatchingEngineCommandsHandler(
             IChaosKitty chaosKitty,
             ILog log,
             IBlockchainWalletsClient walletsClient,
             IMatchingEngineCallsDeduplicationRepository deduplicationRepository,
-            IMatchingEngineClient meClient,
-            ICashOperationsRepositoryClient cashOperationsRepositoryClient)
+            IMatchingEngineClient meClient)
         {
             _chaosKitty = chaosKitty;
             _log = log;
-            _walletsClient = walletsClient;
             _deduplicationRepository = deduplicationRepository;
             _meClient = meClient;
-            _cashOperationsRepositoryClient = cashOperationsRepositoryClient;
         }
 
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(EnrollToMatchingEngineCommand command, IEventPublisher publisher)
         {
-
             _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command, "");
 
             // First level deduplication just to reduce traffic to the ME
@@ -57,21 +48,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 return CommandHandlingResult.Ok();
             }
 
-            // TODO: Add client cache for the walletsClient
-
-            var clientId = await _walletsClient.TryGetClientIdAsync(
-                command.BlockchainType,
-                command.BlockchainAssetId,
-                command.DepositWalletAddress);
-
-            if (clientId == null)
-            {
-                throw new InvalidOperationException("Client ID for the blockchain deposit wallet address is not found");
-            }
-
             var cashInResult = await _meClient.CashInOutAsync(
                 command.CashinOperationId.ToString(),
-                clientId.Value.ToString(),
+                command.RecipientClientId.ToString(),
                 command.AssetId,
                 (double)command.Amount);
 
@@ -92,9 +71,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
                 publisher.PublishEvent(new CashinEnrolledToMatchingEngineEvent
                 {
-                    CashoutOperationId = command.CashoutOperationId,
-                    CashinOperationId = command.CashinOperationId,
-                    ClientId = clientId.Value
+                    CashoutOperationId = command.CashoutOperationId
                 });
 
                 _chaosKitty.Meow(command.CashinOperationId);

@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.SettingsReader;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
+namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient
 {
     [UsedImplicitly]
     public class CrossClientCashoutRepository : ICrossClientCashoutRepository

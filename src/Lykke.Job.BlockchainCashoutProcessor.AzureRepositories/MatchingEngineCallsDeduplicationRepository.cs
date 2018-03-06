@@ -4,8 +4,6 @@ using Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.SettingsReader;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories

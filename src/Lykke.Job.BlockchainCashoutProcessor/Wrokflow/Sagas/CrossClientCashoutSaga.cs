@@ -13,9 +13,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
     /// <summary>
     /// -> Lykke.Job.TransactionsHandler : StartCashoutCommand
-    /// -> CashoutStartedEvent
-    ///     -> BlockchainOperationsExecutor : StartOperationCommand
-    /// -> BlockchainOperationsExecutor : OperationCompletedEvent | OperationFailedEvent
+    /// -> CrossClientCashoutStartedEvent
+    ///     -> EnrollToMatchingEngineCommand
+    /// -> CashinEnrolledToMatchingEngineEvent
     /// </summary>
     [UsedImplicitly]
     public class CrossClientCashoutSaga
@@ -52,23 +52,21 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                        evt.ToAddress,
                        evt.Amount,
                        evt.AssetId,
-                       evt.ToClientId));
+                       evt.RecipientClientId));
 
                 _chaosKitty.Meow(evt.OperationId);
 
-                if (aggregate.State == CrossClientCashoutState.StartedCrossClient)
+                if (aggregate.State == CrossClientCashoutState.Started)
                 {
                     sender.SendCommand(new EnrollToMatchingEngineCommand
-                    {
-                        CashinOperationId = aggregate.CashinOperationId,
-                        CashoutOperationId = aggregate.OperationId,
-                        BlockchainType = aggregate.BlockchainType,
-                        DepositWalletAddress = aggregate.ToAddress,
-                        BlockchainAssetId = aggregate.BlockchainAssetId,
-                        Amount = aggregate.Amount,
-                        AssetId = aggregate.AssetId
-                    },
-                        CqrsModule.CrossClientContext);
+                        {
+                            CashinOperationId = aggregate.CashinOperationId,
+                            CashoutOperationId = aggregate.OperationId,
+                            RecipientClientId = aggregate.RecipientClientId,
+                            Amount = aggregate.Amount,
+                            AssetId = aggregate.AssetId
+                        },
+                        CqrsModule.Self);
 
                     _chaosKitty.Meow(evt.OperationId);
                 }
@@ -89,9 +87,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             {
                 var aggregate = await _cashoutRepository.GetAsync(evt.CashoutOperationId);
 
-                if (aggregate.OnEnrolledToMatchingEngine(evt.ClientId))
+                if (aggregate.OnEnrolledToMatchingEngine())
                 {
-                    _chaosKitty.Meow(evt.CashinOperationId);
+                    _chaosKitty.Meow(evt.CashoutOperationId);
 
                     await _cashoutRepository.SaveAsync(aggregate);
                 }

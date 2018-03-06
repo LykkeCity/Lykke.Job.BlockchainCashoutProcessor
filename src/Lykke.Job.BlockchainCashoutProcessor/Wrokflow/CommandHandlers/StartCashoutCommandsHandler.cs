@@ -53,12 +53,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 throw new InvalidOperationException("BlockchainIntegrationLayerAssetId of the asset is not configured");
             }
 
-            string toAddress = command.ToAddress;
-            string hotWaletAddress = _hotWalletProvider.GetHotWalletAddress(asset.BlockchainIntegrationLayerId);
-            Guid? recipientClient = await _walletsClient.TryGetClientIdAsync(asset.BlockchainIntegrationLayerId,
-                asset.BlockchainIntegrationLayerAssetId, toAddress);
+            var toAddress = command.ToAddress;
+            var hotWaletAddress = _hotWalletProvider.GetHotWalletAddress(asset.BlockchainIntegrationLayerId);
+            var recipientClientId = await _walletsClient.TryGetClientIdAsync(
+                asset.BlockchainIntegrationLayerId,
+                asset.BlockchainIntegrationLayerAssetId, 
+                toAddress);
 
-            if (!recipientClient.HasValue)
+            if (!recipientClientId.HasValue)
             {
                 publisher.PublishEvent(new CashoutStartedEvent
                 {
@@ -84,7 +86,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                     AssetId = command.AssetId,
                     Amount = command.Amount,
                     FromClientId = command.ClientId,
-                    ToClientId = recipientClient.Value
+                    RecipientClientId = recipientClientId.Value
                 });
             }
 

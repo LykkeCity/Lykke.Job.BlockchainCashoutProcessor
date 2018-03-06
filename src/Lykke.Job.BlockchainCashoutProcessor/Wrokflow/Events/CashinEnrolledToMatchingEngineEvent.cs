@@ -1,7 +1,5 @@
 ﻿using MessagePack;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
 {
@@ -13,11 +11,5 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
     {
         [Key(0)]
         public Guid CashoutOperationId { get; set; }
-
-        [Key(1)]
-        public Guid ClientId { get; set; }
-
-        [Key(2)]
-        public Guid CashinOperationId { get; set; }
     }
 }

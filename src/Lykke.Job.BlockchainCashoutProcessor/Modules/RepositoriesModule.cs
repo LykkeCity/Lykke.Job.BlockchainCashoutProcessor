@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories;
+using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;

@@ -21,7 +21,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
     public class CqrsModule : Module
     {
         public static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
-        public static readonly string CrossClientContext = $"{BlockchainCashoutProcessorBoundedContext.Name}.cross-client";
 
         private readonly CqrsSettings _settings;
         private readonly ILog _log;
@@ -59,7 +58,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<StartCashoutCommandsHandler>();
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
-            builder.RegisterType<CrossClientOperationsProjection>();
+            builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
 
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
@@ -76,6 +75,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             const string defaultPipeline = "commands";
             const string defaultRoute = "self";
+            const string eventsRoute = "evets";
 
             return new CqrsEngine(
                 _log,
@@ -105,24 +105,30 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(typeof(ClientOperationFinishRegisteredEvent))
                     .With(defaultPipeline)
 
-                    .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
-                    .From(BlockchainOperationsExecutorBoundedContext.Name)
-                    .On("client-operations")
-                    .WithProjection(typeof(ClientOperationsProjection), BlockchainOperationsExecutorBoundedContext.Name)
-
-                    .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024),
-
-                 Register.BoundedContext(CrossClientContext)
-                 .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
+                    .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<EnrollToMatchingEngineCommandsHandler>()
                     .PublishingEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .With(defaultPipeline)
 
+                    .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
+                    .From(BlockchainOperationsExecutorBoundedContext.Name)
+                    .On("client-operations")
+                    .WithProjection(typeof(ClientOperationsProjection), BlockchainOperationsExecutorBoundedContext.Name)
+
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
-                    .From(CrossClientContext)
-                    .On("cross-client-operations")
-                    .WithProjection(typeof(CrossClientOperationsProjection), CrossClientContext),
+                    .From(Self)
+                    .On("client-operations")
+                    .WithProjection(typeof(ClientOperationsProjection), Self)
+
+                    .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
+                    .From(Self)
+                    .On(eventsRoute)
+                    .WithProjection(typeof(MatchingEngineCallDeduplicationsProjection), Self)
+
+                    .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024)
+                    .ProcessingOptions(eventsRoute).MultiThreaded(4).QueueCapacity(1024)
+                    .ProcessingOptions("client-operations").MultiThreaded(4).QueueCapacity(1024),
 
                 Register.Saga<CashoutSaga>($"{Self}.saga")
                     .ListeningEvents(
@@ -145,16 +151,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .From(Self)
                     .On(defaultRoute),
 
-                 Register.Saga<CrossClientCashoutSaga>($"{CrossClientContext}.saga")
+                 Register.Saga<CrossClientCashoutSaga>($"{Self}.cross-client-saga")
                  .ListeningEvents(typeof(CrossClientCashoutStartedEvent))
                     .From(Self)
                     .On(defaultRoute)
                     .PublishingCommands(typeof(EnrollToMatchingEngineCommand))
-                    .To(CrossClientContext)
+                    .To(Self)
                     .With(defaultPipeline)
 
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
-                    .From(CrossClientContext)
+                    .From(Self)
                     .On(defaultRoute)
                 );
         }

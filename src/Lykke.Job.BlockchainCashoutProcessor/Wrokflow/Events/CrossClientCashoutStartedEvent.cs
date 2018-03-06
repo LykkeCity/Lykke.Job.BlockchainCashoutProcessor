@@ -31,7 +31,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
         public Guid FromClientId { get; set; }
 
         [Key(7)]
-        public Guid ToClientId { get; set; }
+        public Guid RecipientClientId { get; set; }
 
         [Key(8)]
         public string HotWalletAddress { get; set; }
