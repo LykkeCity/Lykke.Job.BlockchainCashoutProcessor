@@ -23,11 +23,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         public static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
 
         private readonly CqrsSettings _settings;
+        private readonly WorkflowSettings _workflowSettings;
         private readonly ILog _log;
 
-        public CqrsModule(CqrsSettings settings, ILog log)
+        public CqrsModule(
+            CqrsSettings settings, 
+            WorkflowSettings workflowSettings, 
+            ILog log)
         {
             _settings = settings;
+            _workflowSettings = workflowSettings;
             _log = log;
         }
 
@@ -55,7 +60,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<CrossClientCashoutSaga>();
             
             // Command handlers
-            builder.RegisterType<StartCashoutCommandsHandler>();
+            builder.RegisterType<StartCashoutCommandsHandler>()
+                .WithParameter(TypedParameter.From(_workflowSettings?.DisableDirectCrossClientCashouts ?? false));
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
