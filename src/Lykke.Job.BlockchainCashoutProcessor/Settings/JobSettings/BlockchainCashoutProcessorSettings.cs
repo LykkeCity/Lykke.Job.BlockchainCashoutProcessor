@@ -16,5 +16,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings
         [Optional]
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]
         public ChaosSettings ChaosKitty { get; set; }
+
+        [Optional]
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        public WorkflowSettings Workflow { get; set; }
     }
 }

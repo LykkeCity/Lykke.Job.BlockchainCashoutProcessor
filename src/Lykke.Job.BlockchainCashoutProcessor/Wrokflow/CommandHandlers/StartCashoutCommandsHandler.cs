@@ -18,17 +18,20 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         private readonly IHotWalletsProvider _hotWalletProvider;
         private readonly IAssetsServiceWithCache _assetsService;
         private readonly IBlockchainWalletsClient _walletsClient;
+        private readonly bool _disableDirectCrossClientCashouts;
 
         public StartCashoutCommandsHandler(
             ILog log,
             IHotWalletsProvider hotWalletProvider,
             IAssetsServiceWithCache assetsService,
-            IBlockchainWalletsClient walletsClient)
+            IBlockchainWalletsClient walletsClient,
+            bool disableDirectCrossClientCashouts)
         {
             _log = log;
             _hotWalletProvider = hotWalletProvider;
             _assetsService = assetsService;
             _walletsClient = walletsClient;
+            _disableDirectCrossClientCashouts = disableDirectCrossClientCashouts;
         }
 
         [UsedImplicitly]
@@ -55,10 +58,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             var toAddress = command.ToAddress;
             var hotWaletAddress = _hotWalletProvider.GetHotWalletAddress(asset.BlockchainIntegrationLayerId);
-            var recipientClientId = await _walletsClient.TryGetClientIdAsync(
-                asset.BlockchainIntegrationLayerId,
-                asset.BlockchainIntegrationLayerAssetId, 
-                toAddress);
+            var recipientClientId = _disableDirectCrossClientCashouts
+                ? null
+                : await _walletsClient.TryGetClientIdAsync(
+                    asset.BlockchainIntegrationLayerId,
+                    asset.BlockchainIntegrationLayerAssetId,
+                    toAddress);
 
             if (!recipientClientId.HasValue)
             {
