@@ -4,7 +4,9 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
+using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
@@ -99,6 +101,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
                     _chaosKitty.Meow(evt.OperationId);
                 }
+
+                sender.SendCommand(new NotifyCashoutCompletedCommand()
+                {
+                    Amount = aggregate.Amount,
+                    AssetId = aggregate.AssetId,
+                    ClientId = aggregate.ClientId,
+                    ToAddress = aggregate.ToAddress,
+                    TransactionHash = aggregate.TransactionHash
+                },
+                BlockchainCashoutProcessorBoundedContext.Name);
             }
             catch (Exception ex)
             {
