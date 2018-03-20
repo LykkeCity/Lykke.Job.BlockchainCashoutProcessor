@@ -31,7 +31,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             _hotWalletProvider = hotWalletProvider;
             _assetsService = assetsService;
             _walletsClient = walletsClient;
-            _disableDirectCrossClientCashouts = false;
+            _disableDirectCrossClientCashouts = disableDirectCrossClientCashouts;
         }
 
         [UsedImplicitly]
