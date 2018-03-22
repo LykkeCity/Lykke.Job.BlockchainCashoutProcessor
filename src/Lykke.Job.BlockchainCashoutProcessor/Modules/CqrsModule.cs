@@ -82,7 +82,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             const string defaultPipeline = "commands";
             const string defaultRoute = "self";
-            const string eventsRoute = "evets";
+            const string eventsRoute = "events";
 
             return new CqrsEngine(
                 _log,
@@ -104,7 +104,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .WithCommandsHandler<OperationCompletedCommandsHandler>()
                     .PublishingEvents(typeof(CashoutCompletedEvent),
                                       typeof(CashinCompletedEvent))
-                    .With(defaultPipeline)
+                    .With(eventsRoute)
 
                     .ListeningCommands(typeof(StartCashoutCommand))
                     .On(defaultRoute)

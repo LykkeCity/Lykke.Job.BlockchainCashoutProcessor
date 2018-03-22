@@ -99,7 +99,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 {
                     AssetId = aggregate.AssetId,
                     Amount = aggregate.Amount,
-                    ClientId = aggregate.ClientId
+                    ClientId = aggregate.RecipientClientId
                 }
                 , BlockchainCashoutProcessorBoundedContext.Name);
             }
