@@ -4,6 +4,7 @@ using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
+using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Modules;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
@@ -59,13 +60,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 if (aggregate.State == CrossClientCashoutState.Started)
                 {
                     sender.SendCommand(new EnrollToMatchingEngineCommand
-                        {
-                            CashinOperationId = aggregate.CashinOperationId,
-                            CashoutOperationId = aggregate.OperationId,
-                            RecipientClientId = aggregate.RecipientClientId,
-                            Amount = aggregate.Amount,
-                            AssetId = aggregate.AssetId
-                        },
+                    {
+                        CashinOperationId = aggregate.CashinOperationId,
+                        CashoutOperationId = aggregate.OperationId,
+                        RecipientClientId = aggregate.RecipientClientId,
+                        Amount = aggregate.Amount,
+                        AssetId = aggregate.AssetId
+                    },
                         CqrsModule.Self);
 
                     _chaosKitty.Meow(evt.OperationId);
@@ -93,6 +94,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
                     await _cashoutRepository.SaveAsync(aggregate);
                 }
+
+                sender.SendCommand(new NotifyCashinCompletedCommand()
+                {
+                    AssetId = aggregate.AssetId,
+                    Amount = aggregate.Amount,
+                    ClientId = aggregate.RecipientClientId
+                }
+                , BlockchainCashoutProcessorBoundedContext.Name);
             }
             catch (Exception ex)
             {

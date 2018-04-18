@@ -1,0 +1,15 @@
+﻿using System;
+using MessagePack;
+
+namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
+{
+    [MessagePackObject(keyAsPropertyName:true)]
+    public class CashinCompletedEvent
+    {
+        public string AssetId { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public Guid ClientId { get; set; }
+    }
+}

@@ -27,8 +27,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         private readonly ILog _log;
 
         public CqrsModule(
-            CqrsSettings settings, 
-            WorkflowSettings workflowSettings, 
+            CqrsSettings settings,
+            WorkflowSettings workflowSettings,
             ILog log)
         {
             _settings = settings;
@@ -58,13 +58,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             // Sagas
             builder.RegisterType<CashoutSaga>();
             builder.RegisterType<CrossClientCashoutSaga>();
-            
+
             // Command handlers
             builder.RegisterType<StartCashoutCommandsHandler>()
                 .WithParameter(TypedParameter.From(_workflowSettings?.DisableDirectCrossClientCashouts ?? false));
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
+            builder.RegisterType<OperationCompletedCommandsHandler>();
 
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
@@ -81,7 +82,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             const string defaultPipeline = "commands";
             const string defaultRoute = "self";
-            const string eventsRoute = "evets";
+            const string eventsRoute = "events";
 
             return new CqrsEngine(
                 _log,
@@ -96,6 +97,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
                 Register.BoundedContext(Self)
                     .FailedCommandRetryDelay(defaultRetryDelay)
+
+                    .ListeningCommands(typeof(NotifyCashinCompletedCommand),
+                        typeof(NotifyCashoutCompletedCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<OperationCompletedCommandsHandler>()
+                    .PublishingEvents(typeof(CashoutCompletedEvent),
+                                      typeof(CashinCompletedEvent))
+                    .With(eventsRoute)
 
                     .ListeningCommands(typeof(StartCashoutCommand))
                     .On(defaultRoute)
@@ -152,6 +161,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
                     .From(BlockchainOperationsExecutorBoundedContext.Name)
                     .On(defaultRoute)
+                    .PublishingCommands(typeof(NotifyCashoutCompletedCommand))
+                    .To(Self)
+                    .With(defaultPipeline)
 
                     .ListeningEvents(typeof(ClientOperationFinishRegisteredEvent))
                     .From(Self)
@@ -168,6 +180,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .From(Self)
                     .On(defaultRoute)
+                    .PublishingCommands(typeof(NotifyCashinCompletedCommand))
+                    .To(Self)
+                    .With(defaultPipeline)
                 );
         }
     }
