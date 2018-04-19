@@ -180,7 +180,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .From(Self)
                     .On(defaultRoute)
-                    .PublishingCommands(typeof(NotifyCashinCompletedCommand))
+                    .PublishingCommands(typeof(NotifyCashinCompletedCommand),
+                                        typeof(NotifyCashoutCompletedCommand))
                     .To(Self)
                     .With(defaultPipeline)
                 );
