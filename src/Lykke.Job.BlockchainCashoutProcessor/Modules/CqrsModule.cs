@@ -63,7 +63,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<StartCashoutCommandsHandler>()
                 .WithParameter(TypedParameter.From(_workflowSettings?.DisableDirectCrossClientCashouts ?? false));
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
-            builder.RegisterType<RegisterClientOperationFinishCommandsHandler>();
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
             builder.RegisterType<OperationCompletedCommandsHandler>();
 
@@ -114,12 +113,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(CrossClientCashoutStartedEvent))
                     .With(defaultPipeline)
 
-                    .ListeningCommands(typeof(RegisterClientOperationFinishCommand))
-                    .On(defaultRoute)
-                    .WithCommandsHandler<RegisterClientOperationFinishCommandsHandler>()
-                    .PublishingEvents(typeof(ClientOperationFinishRegisteredEvent))
-                    .With(defaultPipeline)
-
                     .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<EnrollToMatchingEngineCommandsHandler>()
@@ -163,11 +156,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On(defaultRoute)
                     .PublishingCommands(typeof(NotifyCashoutCompletedCommand))
                     .To(Self)
-                    .With(defaultPipeline)
-
-                    .ListeningEvents(typeof(ClientOperationFinishRegisteredEvent))
-                    .From(Self)
-                    .On(defaultRoute),
+                    .With(defaultPipeline),
 
                  Register.Saga<CrossClientCashoutSaga>($"{Self}.cross-client-saga")
                  .ListeningEvents(typeof(CrossClientCashoutStartedEvent))

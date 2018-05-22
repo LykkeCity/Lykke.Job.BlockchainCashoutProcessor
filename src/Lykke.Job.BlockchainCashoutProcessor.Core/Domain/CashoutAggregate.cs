@@ -11,7 +11,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public DateTime StartMoment { get; }
         public DateTime? OperationFinishMoment { get; private set; }
-        public DateTime? ClientOperationFinishRegistrationMoment { get; private set; }
 
         public Guid OperationId { get; }
         public Guid ClientId { get; }
@@ -58,7 +57,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             CashoutResult result,
             DateTime startMoment,
             DateTime? operationFinishMoment,
-            DateTime? clientOperationFinishRegistrationMoment,
             Guid operationId,
             Guid clientId,
             string blockchainType,
@@ -78,7 +76,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
             StartMoment = startMoment;
             OperationFinishMoment = operationFinishMoment;
-            ClientOperationFinishRegistrationMoment = clientOperationFinishRegistrationMoment;
 
             OperationId = operationId;
             ClientId = clientId;
@@ -122,7 +119,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             CashoutResult result,
             DateTime startMoment,
             DateTime? operationFinishMoment,
-            DateTime? clientOperationFinishRegistrationMoment,
             Guid operationId,
             Guid clientId,
             string blockchainType,
@@ -142,7 +138,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 result,
                 startMoment,
                 operationFinishMoment,
-                clientOperationFinishRegistrationMoment,
                 operationId,
                 clientId,
                 blockchainType,
@@ -188,18 +183,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Error = error;
 
             Result = CashoutResult.Failure;
-
-            return true;
-        }
-
-        public bool OnClientOperationFinishRegisteredEvent()
-        {
-            if (!SwitchState(CashoutState.OperationIsFinished, CashoutState.ClientOperationFinishIsRegistered))
-            {
-                return false;
-            }
-
-            ClientOperationFinishRegistrationMoment = DateTime.UtcNow;
 
             return true;
         }

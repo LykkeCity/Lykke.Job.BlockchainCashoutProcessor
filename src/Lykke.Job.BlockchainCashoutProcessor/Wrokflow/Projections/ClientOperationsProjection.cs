@@ -38,29 +38,20 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
         {
             _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
 
-            try
+            var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
+
+            if (aggregate == null)
             {
-
-                var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-
-                if (aggregate == null)
-                {
-                    // This is not a cashout operation
-                    return;
-                }
-
-                await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
-                    aggregate.ClientId.ToString(),
-                    aggregate.OperationId.ToString(),
-                    evt.TransactionHash);
-
-                _chaosKitty.Meow(evt.OperationId);
+                // This is not a cashout operation
+                return;
             }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, ex);
-                throw;
-            }
+
+            await _clientOperationsRepositoryClient.UpdateBlockchainHashAsync(
+                aggregate.ClientId.ToString(),
+                aggregate.OperationId.ToString(),
+                evt.TransactionHash);
+
+            _chaosKitty.Meow(evt.OperationId);
         }
 
         [UsedImplicitly]
@@ -68,40 +59,32 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
         {
             _log.WriteInfo(nameof(CashinEnrolledToMatchingEngineEvent), evt, "");
 
-            try
-            {
-                var aggregate = await _crossClientCashoutRepository.GetAsync(evt.CashoutOperationId);
+            var aggregate = await _crossClientCashoutRepository.GetAsync(evt.CashoutOperationId);
 
-                await _clientOperationsRepositoryClient.RegisterAsync(new CashInOutOperation(
-                    id: aggregate.CashinOperationId.ToString(),
-                    transactionId: aggregate.CashinOperationId.ToString(),
-                    dateTime: aggregate.StartMoment,
-                    amount: (double)aggregate.Amount,
-                    assetId: aggregate.AssetId,
-                    clientId: aggregate.RecipientClientId.ToString(),
-                    addressFrom: aggregate.ToAddress,
-                    addressTo: aggregate.HotWalletAddress,
-                    type: CashOperationType.ForwardCashIn,
-                    state: TransactionStates.SettledNoChain,
-                    isSettled: false,
-                    blockChainHash: "",
+            await _clientOperationsRepositoryClient.RegisterAsync(new CashInOutOperation(
+                id: aggregate.CashinOperationId.ToString(),
+                transactionId: aggregate.CashinOperationId.ToString(),
+                dateTime: aggregate.StartMoment,
+                amount: (double)aggregate.Amount,
+                assetId: aggregate.AssetId,
+                clientId: aggregate.RecipientClientId.ToString(),
+                addressFrom: aggregate.ToAddress,
+                addressTo: aggregate.HotWalletAddress,
+                type: CashOperationType.ForwardCashIn,
+                state: TransactionStates.SettledNoChain,
+                isSettled: false,
+                blockChainHash: "",
 
-                    // These fields are not used
+                // These fields are not used
 
-                    feeType: FeeType.Unknown,
-                    feeSize: 0,
-                    isRefund: false,
-                    multisig: "",
-                    isHidden: false
-                ));
+                feeType: FeeType.Unknown,
+                feeSize: 0,
+                isRefund: false,
+                multisig: "",
+                isHidden: false
+            ));
 
-                _chaosKitty.Meow(evt.CashoutOperationId);
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(CashinEnrolledToMatchingEngineEvent), evt, ex);
-                throw;
-            }
+            _chaosKitty.Meow(evt.CashoutOperationId);
         }
     }
 }

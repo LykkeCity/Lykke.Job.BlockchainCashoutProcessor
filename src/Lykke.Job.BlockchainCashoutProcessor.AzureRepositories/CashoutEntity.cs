@@ -16,7 +16,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         public DateTime StartMoment { get; set; }
         public DateTime? OperationFinishMoment { get; set; }
-        public DateTime? ClientOperationFinishRegistrationMoment { get; set; }
 
         public Guid OperationId { get; set; }
         public Guid ClientId { get; set; }
@@ -68,7 +67,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 Result = aggregate.Result,
                 StartMoment = aggregate.StartMoment,
                 OperationFinishMoment = aggregate.OperationFinishMoment,
-                ClientOperationFinishRegistrationMoment = aggregate.ClientOperationFinishRegistrationMoment,
                 OperationId = aggregate.OperationId,
                 ClientId = aggregate.ClientId,
                 BlockchainType = aggregate.BlockchainType,
@@ -92,7 +90,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 Result,
                 StartMoment,
                 OperationFinishMoment,
-                ClientOperationFinishRegistrationMoment,
                 OperationId,
                 ClientId,
                 BlockchainType,

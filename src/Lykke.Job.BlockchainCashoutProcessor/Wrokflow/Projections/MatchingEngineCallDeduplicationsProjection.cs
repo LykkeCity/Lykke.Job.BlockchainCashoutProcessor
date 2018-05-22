@@ -33,19 +33,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
         {
             _log.WriteInfo(nameof(CashinEnrolledToMatchingEngineEvent), evt, "");
 
-            try
-            {
-                var aggregate = await _crossClientCashoutRepository.GetAsync(evt.CashoutOperationId);
+            var aggregate = await _crossClientCashoutRepository.GetAsync(evt.CashoutOperationId);
 
-                await _deduplicationRepository.TryRemoveAsync(aggregate.CashinOperationId);
+            await _deduplicationRepository.TryRemoveAsync(aggregate.CashinOperationId);
 
-                _chaosKitty.Meow(evt.CashoutOperationId);
-            }
-            catch (Exception ex)
-            {
-                _log.WriteError(nameof(CashinEnrolledToMatchingEngineEvent), evt, ex);
-                throw;
-            }
+            _chaosKitty.Meow(evt.CashoutOperationId);
         }
     }
 }
