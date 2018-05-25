@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Common.Log;
+﻿using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
@@ -22,24 +20,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     public class CrossClientCashoutSaga
     {
         private readonly IChaosKitty _chaosKitty;
-        private readonly ILog _log;
         private readonly ICrossClientCashoutRepository _cashoutRepository;
 
         public CrossClientCashoutSaga(
             IChaosKitty chaosKitty,
-            ILog log,
             ICrossClientCashoutRepository cashoutRepository)
         {
             _chaosKitty = chaosKitty;
-            _log = log;
             _cashoutRepository = cashoutRepository;
         }
 
         [UsedImplicitly]
         private async Task Handle(CrossClientCashoutStartedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(CrossClientCashoutStartedEvent), evt, "");
-
             var aggregate = await _cashoutRepository.GetOrAddAsync(
                 evt.OperationId,
                 () => CrossClientCashoutAggregate.StartNewCrossClient(
@@ -74,8 +67,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(CashinEnrolledToMatchingEngineEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(CashinEnrolledToMatchingEngineEvent), evt, "");
-
             var aggregate = await _cashoutRepository.GetAsync(evt.CashoutOperationId);
 
             if (aggregate.OnEnrolledToMatchingEngine())

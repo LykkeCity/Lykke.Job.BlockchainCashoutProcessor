@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Common.Log;
+﻿using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
@@ -22,24 +20,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     public class CashoutSaga
     {
         private readonly IChaosKitty _chaosKitty;
-        private readonly ILog _log;
         private readonly ICashoutRepository _cashoutRepository;
 
         public CashoutSaga(
             IChaosKitty chaosKitty,
-            ILog log,
             ICashoutRepository cashoutRepository)
         {
             _chaosKitty = chaosKitty;
-            _log = log;
             _cashoutRepository = cashoutRepository;
         }
 
         [UsedImplicitly]
         private async Task Handle(CashoutStartedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(CashoutStartedEvent), evt, "");
-
             var aggregate = await _cashoutRepository.GetOrAddAsync(
                 evt.OperationId,
                 () => CashoutAggregate.StartNew(
@@ -75,8 +68,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
-
             var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
 
             if (aggregate == null)
@@ -106,8 +97,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, "");
-
             var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
 
             if (aggregate == null)
