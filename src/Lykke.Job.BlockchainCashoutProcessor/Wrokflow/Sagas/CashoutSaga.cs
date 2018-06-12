@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Common.Log;
+﻿using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
@@ -22,137 +20,97 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     public class CashoutSaga
     {
         private readonly IChaosKitty _chaosKitty;
-        private readonly ILog _log;
         private readonly ICashoutRepository _cashoutRepository;
 
         public CashoutSaga(
             IChaosKitty chaosKitty,
-            ILog log,
             ICashoutRepository cashoutRepository)
         {
             _chaosKitty = chaosKitty;
-            _log = log;
             _cashoutRepository = cashoutRepository;
         }
 
         [UsedImplicitly]
         private async Task Handle(CashoutStartedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(CashoutStartedEvent), evt, "");
-
-            try
-            {
-                var aggregate = await _cashoutRepository.GetOrAddAsync(
+            var aggregate = await _cashoutRepository.GetOrAddAsync(
+                evt.OperationId,
+                () => CashoutAggregate.StartNew(
                     evt.OperationId,
-                    () => CashoutAggregate.StartNew(
-                        evt.OperationId,
-                        evt.ClientId,
-                        evt.BlockchainType,
-                        evt.BlockchainAssetId,
-                        evt.HotWalletAddress,
-                        evt.ToAddress,
-                        evt.Amount,
-                        evt.AssetId));
+                    evt.ClientId,
+                    evt.BlockchainType,
+                    evt.BlockchainAssetId,
+                    evt.HotWalletAddress,
+                    evt.ToAddress,
+                    evt.Amount,
+                    evt.AssetId));
 
-                _chaosKitty.Meow(evt.OperationId);
+            _chaosKitty.Meow(evt.OperationId);
 
-                if (aggregate.State == CashoutState.Started)
-                {
-                    // TODO: Add tag (cashin/cashiout) to the operation, and pass it to the operations executor?
-
-                    sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand
-                    {
-                        OperationId = aggregate.OperationId,
-                        FromAddress = aggregate.HotWalletAddress,
-                        ToAddress = aggregate.ToAddress,
-                        AssetId = aggregate.AssetId,
-                        Amount = aggregate.Amount,
-                        // For the cashout all amount should be transfered to the destination address,
-                        // so the fee shouldn't be included in the amount.
-                        IncludeFee = false
-                    }, BlockchainOperationsExecutorBoundedContext.Name);
-                }
-            }
-            catch (Exception ex)
+            if (aggregate.State == CashoutState.Started)
             {
-                _log.WriteError(nameof(CashoutStartedEvent), evt, ex);
-                throw;
+                // TODO: Add tag (cashin/cashiout) to the operation, and pass it to the operations executor?
+
+                sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand
+                {
+                    OperationId = aggregate.OperationId,
+                    FromAddress = aggregate.HotWalletAddress,
+                    ToAddress = aggregate.ToAddress,
+                    AssetId = aggregate.AssetId,
+                    Amount = aggregate.Amount,
+                    // For the cashout all amount should be transfered to the destination address,
+                    // so the fee shouldn't be included in the amount.
+                    IncludeFee = false
+                }, BlockchainOperationsExecutorBoundedContext.Name);
             }
         }
 
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, "");
+            var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
 
-            try
+            if (aggregate == null)
             {
-                var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-
-                if (aggregate == null)
-                {
-                    // This is not a cashout operation
-                    return;
-                }
-
-                if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee))
-                {
-                    await _cashoutRepository.SaveAsync(aggregate);
-
-                    _chaosKitty.Meow(evt.OperationId);
-                }
-
-                sender.SendCommand(new NotifyCashoutCompletedCommand()
-                {
-                    Amount = aggregate.Amount,
-                    AssetId = aggregate.AssetId,
-                    ClientId = aggregate.ClientId,
-                    ToAddress = aggregate.ToAddress,
-                    TransactionHash = aggregate.TransactionHash
-                },
-                BlockchainCashoutProcessorBoundedContext.Name);
+                // This is not a cashout operation
+                return;
             }
-            catch (Exception ex)
+
+            if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee))
             {
-                _log.WriteError(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent), evt, ex);
-                throw;
+                await _cashoutRepository.SaveAsync(aggregate);
+
+                _chaosKitty.Meow(evt.OperationId);
             }
+
+            sender.SendCommand(new NotifyCashoutCompletedCommand()
+            {
+                Amount = aggregate.Amount,
+                AssetId = aggregate.AssetId,
+                ClientId = aggregate.ClientId,
+                ToAddress = aggregate.ToAddress,
+                TransactionHash = aggregate.TransactionHash
+            },
+            BlockchainCashoutProcessorBoundedContext.Name);
         }
 
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent evt, ICommandSender sender)
         {
-            _log.WriteInfo(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, "");
+            var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
 
-            try
+            if (aggregate == null)
             {
-                var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-
-                if (aggregate == null)
-                {
-                    // This is not a cashout operation
-                    return;
-                }
-
-                if (aggregate.OnOperationFailed(evt.Error))
-                {
-                    await _cashoutRepository.SaveAsync(aggregate);
-
-                    _chaosKitty.Meow(evt.OperationId);
-                }
+                // This is not a cashout operation
+                return;
             }
-            catch (Exception ex)
+
+            if (aggregate.OnOperationFailed(evt.Error))
             {
-                _log.WriteError(nameof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent), evt, ex);
-                throw;
-            }
-        }
+                await _cashoutRepository.SaveAsync(aggregate);
 
-        [Obsolete("Should be removed with next release")]
-        [UsedImplicitly]
-        private Task Handle(ClientOperationFinishRegisteredEvent evt, ICommandSender sender)
-        {
-            return Task.CompletedTask;
+                _chaosKitty.Meow(evt.OperationId);
+            }
         }
     }
 }

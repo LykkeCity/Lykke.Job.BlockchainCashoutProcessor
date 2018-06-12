@@ -37,14 +37,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(EnrollToMatchingEngineCommand command, IEventPublisher publisher)
         {
-            _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command, "");
-
             // First level deduplication just to reduce traffic to the ME
             if (await _deduplicationRepository.IsExistsAsync(command.CashinOperationId))
             {
-                _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command.CashinOperationId, "Deduplicated");
+                _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command.CashinOperationId, "Deduplicated at first level");
 
-                // Just skips
+                // Workflow should be continued
+
+                publisher.PublishEvent(new CashinEnrolledToMatchingEngineEvent
+                {
+                    CashoutOperationId = command.CashoutOperationId
+                });
+
                 return CommandHandlingResult.Ok();
             }
 

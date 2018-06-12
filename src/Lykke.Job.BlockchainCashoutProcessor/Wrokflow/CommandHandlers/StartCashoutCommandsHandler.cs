@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
@@ -14,20 +13,17 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
     [UsedImplicitly]
     public class StartCashoutCommandsHandler
     {
-        private readonly ILog _log;
         private readonly IHotWalletsProvider _hotWalletProvider;
         private readonly IAssetsServiceWithCache _assetsService;
         private readonly IBlockchainWalletsClient _walletsClient;
         private readonly bool _disableDirectCrossClientCashouts;
 
         public StartCashoutCommandsHandler(
-            ILog log,
             IHotWalletsProvider hotWalletProvider,
             IAssetsServiceWithCache assetsService,
             IBlockchainWalletsClient walletsClient,
             bool disableDirectCrossClientCashouts)
         {
-            _log = log;
             _hotWalletProvider = hotWalletProvider;
             _assetsService = assetsService;
             _walletsClient = walletsClient;
@@ -37,8 +33,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(StartCashoutCommand command, IEventPublisher publisher)
         {
-            _log.WriteInfo(nameof(StartCashoutCommand), command, "");
-            
             var asset = await _assetsService.TryGetAssetAsync(command.AssetId);
 
             if (asset == null)
