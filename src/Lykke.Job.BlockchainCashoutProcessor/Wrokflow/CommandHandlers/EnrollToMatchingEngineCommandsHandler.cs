@@ -28,10 +28,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             IMatchingEngineCallsDeduplicationRepository deduplicationRepository,
             IMatchingEngineClient meClient)
         {
-            _chaosKitty = chaosKitty;
-            _log = log;
-            _deduplicationRepository = deduplicationRepository;
-            _meClient = meClient;
+            _chaosKitty = chaosKitty ?? throw new ArgumentNullException(nameof(chaosKitty));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _deduplicationRepository = deduplicationRepository ?? throw new ArgumentNullException(nameof(deduplicationRepository));
+            _meClient = meClient ?? throw new ArgumentNullException(nameof(meClient));
         }
 
         [UsedImplicitly]

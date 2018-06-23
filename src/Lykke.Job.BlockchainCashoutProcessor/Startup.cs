@@ -69,6 +69,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     appSettings.Nested(x => x.BlockchainCashoutProcessorJob.Db),
                     Log));
                 builder.RegisterModule(new BlockchainsModule(
+                    Log, 
                     appSettings.CurrentValue.BlockchainsIntegration,
                     appSettings.CurrentValue.BlockchainWalletsServiceClient));
                 builder.RegisterModule(new CqrsModule(

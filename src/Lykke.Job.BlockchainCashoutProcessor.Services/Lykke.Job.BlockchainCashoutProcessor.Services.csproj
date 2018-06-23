@@ -9,8 +9,4 @@
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.Core\Lykke.Job.BlockchainCashoutProcessor.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Blockchains\" />
-  </ItemGroup>
-
 </Project>
