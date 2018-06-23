@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Autofac;
 using Common.Log;
@@ -20,9 +21,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             BlockchainsIntegrationSettings blockchainsIntegrationSettings,
             BlockchainWalletsServiceClientSettings blockchainWalletsServiceClientSettings)
         {
-            _log = log;
-            _blockchainsIntegrationSettings = blockchainsIntegrationSettings;
-            _blockchainWalletsServiceClientSettings = blockchainWalletsServiceClientSettings;
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+            _blockchainsIntegrationSettings = blockchainsIntegrationSettings ?? throw new ArgumentNullException(nameof(blockchainsIntegrationSettings));
+            _blockchainWalletsServiceClientSettings = blockchainWalletsServiceClientSettings ?? throw new ArgumentNullException(nameof(blockchainWalletsServiceClientSettings));
         }
 
         protected override void Load(ContainerBuilder builder)

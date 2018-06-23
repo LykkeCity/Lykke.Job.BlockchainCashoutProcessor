@@ -27,10 +27,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             IBlockchainWalletsClient walletsClient,
             bool disableDirectCrossClientCashouts)
         {
+            if (log == null)
+            {
+                throw new ArgumentNullException(nameof(log));
+            }
+
             _log = log.CreateComponentScope(nameof(StartCashoutCommandsHandler));
-            _blockchainConfigurationProvider = blockchainConfigurationProvider;
-            _assetsService = assetsService;
-            _walletsClient = walletsClient;
+            _blockchainConfigurationProvider = blockchainConfigurationProvider ?? throw new ArgumentNullException(nameof(blockchainConfigurationProvider));
+            _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsService));
+            _walletsClient = walletsClient ?? throw new ArgumentNullException(nameof(walletsClient));
             _disableDirectCrossClientCashouts = disableDirectCrossClientCashouts;
         }
 

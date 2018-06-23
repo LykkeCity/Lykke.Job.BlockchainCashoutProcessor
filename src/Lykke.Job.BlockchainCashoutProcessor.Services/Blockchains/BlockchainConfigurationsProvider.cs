@@ -12,7 +12,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Services.Blockchains
 
         public BlockchainConfigurationsProvider(IReadOnlyDictionary<string, BlockchainConfiguration> map)
         {
-            _map = map;
+            _map = map ?? throw new ArgumentNullException(nameof(map));
         }
 
         public BlockchainConfiguration GetConfiguration(string blockchainType)
