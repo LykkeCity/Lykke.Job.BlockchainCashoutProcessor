@@ -35,7 +35,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string hotWalletAddress,
             string toAddress,
             decimal amount,
-            string assetId)
+            string assetId,
+            CashoutState state)
         {
             StartMoment = DateTime.UtcNow;
 
@@ -48,7 +49,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Amount = amount;
             AssetId = assetId;
 
-            State = CashoutState.Started;
+            State = state;
             Result = CashoutResult.Unknown;
         }
 
@@ -111,7 +112,30 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 hotWalletAddress,
                 toAddress,
                 amount,
-                assetId);
+                assetId,
+                CashoutState.Started);
+        }
+
+        public static CashoutAggregate StartAggregatedNew(
+            Guid operationId,
+            Guid clientId,
+            string blockchainType,
+            string blockchainAssetId,
+            string hotWalletAddress,
+            string toAddress,
+            decimal amount,
+            string assetId)
+        {
+            return new CashoutAggregate(
+                operationId,
+                clientId,
+                blockchainType,
+                blockchainAssetId,
+                hotWalletAddress,
+                toAddress,
+                amount,
+                assetId,
+                CashoutState.AggregatedOperationStarted);
         }
 
         public static CashoutAggregate Restore(

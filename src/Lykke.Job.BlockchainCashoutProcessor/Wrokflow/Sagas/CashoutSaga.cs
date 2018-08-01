@@ -64,7 +64,32 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     // For the cashout all amount should be transfered to the destination address,
                     // so the fee shouldn't be included in the amount.
                     IncludeFee = false
-                }, BlockchainOperationsExecutorBoundedContext.Name);
+                }, BlockchainOperationsExecutorBoundedContext.Name); 
+            }
+        }
+
+        [UsedImplicitly]
+        private async Task Handle(CashoutBatchingStartedEvent evt, ICommandSender sender)
+        {
+            var aggregate = await _cashoutRepository.GetOrAddAsync(
+                evt.OperationId,
+                () => CashoutAggregate.StartAggregatedNew(
+                    evt.OperationId,
+                    evt.ClientId,
+                    evt.BlockchainType,
+                    evt.BlockchainAssetId,
+                    evt.HotWalletAddress,
+                    evt.ToAddress,
+                    evt.Amount,
+                    evt.AssetId));
+
+            _chaosKitty.Meow(evt.OperationId);
+
+            if (aggregate.State == CashoutState.AggregatedOperationStarted)
+            {
+                // TODO: Add tag (cashin/cashiout) to the operation, and pass it to the operations executor?
+
+                gfg
             }
         }
 

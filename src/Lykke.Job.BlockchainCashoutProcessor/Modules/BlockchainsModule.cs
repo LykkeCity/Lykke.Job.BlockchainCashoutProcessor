@@ -6,6 +6,7 @@ using Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 using Lykke.Job.BlockchainCashoutProcessor.Services.Blockchains;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.Blockchain;
+using Lykke.Service.BlockchainApi.Client;
 using Lykke.Service.BlockchainWallets.Client;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Modules
@@ -35,6 +36,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             var blockchainConfigurations = new Dictionary<string, BlockchainConfiguration>();
 
+            builder.RegisterType<BlockchainApiClientProvider>()
+                .As<IBlockchainApiClientProvider>();
+
+
             foreach (var blockchain in _blockchainsIntegrationSettings.Blockchains.Where(b => !b.IsDisabled))
             {
                 _log.WriteInfo("Blockchains registration", "", 
@@ -48,10 +53,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 var blockchainConfiguration = new BlockchainConfiguration
                 (
                     blockchain.HotWalletAddress,
-                    blockchain.AreCashoutsDisabled
+                    blockchain.AreCashoutsDisabled,
+                    blockchain.CashoutAggregation != null ? 
+                        new BlockchainCashoutAggregationConfiguration(blockchain.CashoutAggregation.MaxPeriod, 
+                            blockchain.CashoutAggregation.MaxCount):
+                        null
                 );
 
                 blockchainConfigurations.Add(blockchain.Type, blockchainConfiguration);
+
+                builder.RegisterType<BlockchainApiClient>()
+                    .Named<IBlockchainApiClient>(blockchain.Type)
+                    .WithParameter(TypedParameter.From(blockchain.ApiUrl))
+                    .SingleInstance();
             }
 
             builder.RegisterType<BlockchainConfigurationsProvider>()

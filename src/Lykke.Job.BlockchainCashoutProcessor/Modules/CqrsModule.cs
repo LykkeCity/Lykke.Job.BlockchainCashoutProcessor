@@ -7,6 +7,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
@@ -58,6 +59,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     }
                 }),
                 new RabbitMqTransportFactory());
+
+            builder.Register(c => new RetryDelayProvider(
+                    _settings.WaitForBatchClosingRetryDelay))
+                .AsSelf();
 
             // Sagas
             builder.RegisterType<CashoutSaga>();

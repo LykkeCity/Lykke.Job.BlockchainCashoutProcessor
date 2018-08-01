@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains
 {
@@ -7,7 +8,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains
         public string HotWalletAddress { get; }
         public bool AreCashoutsDisabled { get; }
 
-        public BlockchainConfiguration(string hotWalletAddress, bool areCashoutsDisabled)
+        [CanBeNull]
+        public BlockchainCashoutAggregationConfiguration CashoutAggregation { get; }
+
+        public bool SupportCashoutAggregation => CashoutAggregation != null;
+
+        public BlockchainConfiguration(string hotWalletAddress, bool areCashoutsDisabled, [CanBeNull] BlockchainCashoutAggregationConfiguration cashoutAggregation)
         {
             if (string.IsNullOrWhiteSpace(hotWalletAddress))
             {
@@ -16,6 +22,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains
 
             HotWalletAddress = hotWalletAddress;
             AreCashoutsDisabled = areCashoutsDisabled;
+
+            CashoutAggregation = cashoutAggregation;
         }
     }
 }

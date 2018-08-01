@@ -13,5 +13,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings
 
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]
         public TimeSpan RetryDelay { get; set; }
+
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        public TimeSpan WaitForBatchClosingRetryDelay { get; set; }
     }
 }

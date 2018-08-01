@@ -1,8 +1,10 @@
 ﻿using Autofac;
 using Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories;
+using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
@@ -27,6 +29,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         {
             builder.Register(c => CashoutRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
                 .As<ICashoutRepository>()
+                .SingleInstance();
+
+            builder.Register(c => CashoutBatchRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
+                .As<ICashoutBatchRepository>()
                 .SingleInstance();
 
             builder.Register(c => CrossClientCashoutRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
