@@ -8,7 +8,6 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Mappers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
@@ -178,6 +177,54 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     );
                 }
 
+                await _cashoutRepository.SaveAsync(aggregate);
+
+                _chaosKitty.Meow(evt.OperationId);
+            }
+        }
+
+        [UsedImplicitly]
+        private async Task Handle(BatchedOperationExecutionCompletedEvent evt, ICommandSender sender)
+        {
+            var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
+
+            if (aggregate == null)
+            {
+                // This is not a cashout operation
+                return;
+            }
+
+            if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee))
+            {
+                await _cashoutRepository.SaveAsync(aggregate);
+
+                _chaosKitty.Meow(evt.OperationId);
+            }
+
+            sender.SendCommand(new NotifyCashoutCompletedCommand
+                {
+                    Amount = aggregate.Amount,
+                    AssetId = aggregate.AssetId,
+                    ClientId = aggregate.ClientId,
+                    ToAddress = aggregate.ToAddress,
+                    TransactionHash = aggregate.TransactionHash
+                },
+                BlockchainCashoutProcessorBoundedContext.Name);
+        }
+
+        [UsedImplicitly]
+        private async Task Handle(BatchedOperationExecutionFailedEvent evt, ICommandSender sender)
+        {
+            var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
+
+            if (aggregate == null)
+            {
+                // This is not a cashout operation
+                return;
+            }
+
+            if (aggregate.OnOperationFailed(evt.Error))
+            {
                 await _cashoutRepository.SaveAsync(aggregate);
 
                 _chaosKitty.Meow(evt.OperationId);

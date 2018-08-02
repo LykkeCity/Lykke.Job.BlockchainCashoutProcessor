@@ -3,9 +3,9 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
     public class DeleteActiveBatchCommandHandler
     {

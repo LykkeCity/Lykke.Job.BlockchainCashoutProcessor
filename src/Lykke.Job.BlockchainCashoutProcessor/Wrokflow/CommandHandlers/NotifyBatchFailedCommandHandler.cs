@@ -2,10 +2,10 @@
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch;
-using Lykke.Job.BlockchainOperationsExecutor.Contract.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
     public class NotifyBatchFailedCommandHandler
     {
@@ -17,20 +17,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
         }
 
         [UsedImplicitly]
-        public Task<CommandHandlingResult> Handle(NotifyBatchCompletedCommand command,
+        public Task<CommandHandlingResult> Handle(NotifyBatchFailedCommand command,
             IEventPublisher publisher)
         {
             foreach (var op in command.ToOperations)
             {
                 _chaosKitty.Meow(op.operationId);
 
-                publisher.PublishEvent(new OperationExecutionCompletedEvent
+                publisher.PublishEvent(new BatchedOperationExecutionFailedEvent
                 {
                     OperationId = op.operationId,
-                    Block = command.Block,
-                    Fee = command.Fee,
-                    TransactionAmount = command.TransactionAmount,
-                    TransactionHash = command.TransactionHash
+                    ErrorCode = command.ErrorCode,
+                    Error = command.Error
                 });
             }
 

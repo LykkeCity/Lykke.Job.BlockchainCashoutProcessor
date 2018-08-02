@@ -79,17 +79,34 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             if (!recipientClientId.HasValue)
             {
-                publisher.PublishEvent(new CashoutStartedEvent
+                if (blockchainConfiguration.SupportCashoutAggregation)
                 {
-                    OperationId = command.OperationId,
-                    BlockchainType = asset.BlockchainIntegrationLayerId,
-                    BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
-                    HotWalletAddress = blockchainConfiguration.HotWalletAddress,
-                    ToAddress = toAddress,
-                    AssetId = command.AssetId,
-                    Amount = command.Amount,
-                    ClientId = command.ClientId
-                });
+                    publisher.PublishEvent(new CashoutBatchingStartedEvent
+                    {
+                        OperationId = command.OperationId,
+                        BlockchainType = asset.BlockchainIntegrationLayerId,
+                        BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
+                        HotWalletAddress = blockchainConfiguration.HotWalletAddress,
+                        ToAddress = toAddress,
+                        AssetId = command.AssetId,
+                        Amount = command.Amount,
+                        ClientId = command.ClientId
+                    });
+                }
+                else
+                {
+                    publisher.PublishEvent(new CashoutStartedEvent
+                    {
+                        OperationId = command.OperationId,
+                        BlockchainType = asset.BlockchainIntegrationLayerId,
+                        BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
+                        HotWalletAddress = blockchainConfiguration.HotWalletAddress,
+                        ToAddress = toAddress,
+                        AssetId = command.AssetId,
+                        Amount = command.Amount,
+                        ClientId = command.ClientId
+                    });
+                }
             }
             else //CrossClient Cashout
             {

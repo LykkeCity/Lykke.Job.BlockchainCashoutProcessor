@@ -1,7 +1,7 @@
 ﻿using System;
 using MessagePack;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
 {
     [MessagePackObject]
     public class BatchExecutionStartedEvent

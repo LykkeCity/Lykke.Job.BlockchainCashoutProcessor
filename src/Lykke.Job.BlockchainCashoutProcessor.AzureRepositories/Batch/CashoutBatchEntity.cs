@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Common;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
 using Microsoft.WindowsAzure.Storage.Table;
 

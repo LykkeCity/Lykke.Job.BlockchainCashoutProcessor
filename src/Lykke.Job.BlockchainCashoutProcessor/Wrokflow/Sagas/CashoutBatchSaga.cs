@@ -5,8 +5,8 @@ using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batch;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas

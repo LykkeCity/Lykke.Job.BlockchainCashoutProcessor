@@ -2,14 +2,15 @@
 using Lykke.Job.BlockchainOperationsExecutor.Contract.Errors;
 using MessagePack;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
 {
-    [MessagePackObject]
-    public class NotifyBatchFailedCommand
+    /// <summary>Batched operation execution is failed</summary>
+    [MessagePackObject(false)]
+    public class BatchedOperationExecutionFailedEvent
     {
         /// <summary>Lykke unique operation ID</summary>
         [Key(0)]
-        public Guid BatchId { get; set; }
+        public Guid OperationId { get; set; }
 
         /// <summary>Error description</summary>
         [Key(1)]
@@ -18,8 +19,5 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch
         /// <summary>Error code</summary>
         [Key(2)]
         public OperationExecutionErrorCode ErrorCode { get; set; }
-
-        [Key(5)]
-        public (Guid operationId, decimal amount, string destinationAddress)[] ToOperations { get; set; }
     }
 }

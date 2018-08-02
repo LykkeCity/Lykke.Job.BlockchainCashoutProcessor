@@ -9,6 +9,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections;
@@ -68,6 +69,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             // Sagas
             builder.RegisterType<CashoutSaga>();
             builder.RegisterType<CrossClientCashoutSaga>();
+            builder.RegisterType<CashoutBatchSaga>();
 
             // Command handlers
             builder.RegisterType<StartCashoutCommandsHandler>()
@@ -76,6 +78,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
             builder.RegisterType<OperationCompletedCommandsHandler>();
             builder.RegisterType<NotifyCashoutFailedCommandsHandler>();
+            builder.RegisterType<DeleteActiveBatchCommandHandler>();
+            builder.RegisterType<NotifyBatchFailedCommandHandler>();
+            builder.RegisterType<NotifyBatchCompetedCommandHandler>();
+            builder.RegisterType<SuspendActiveBatchCommandHandler>();
 
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
@@ -128,7 +134,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .WithCommandsHandler<StartCashoutCommandsHandler>()
                     .PublishingEvents(
                         typeof(CashoutStartedEvent),
-                        typeof(CrossClientCashoutStartedEvent))
+                        typeof(CrossClientCashoutStartedEvent),
+                        typeof(CashoutBatchingStartedEvent))
                     .With(defaultPipeline)
 
                     .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
@@ -152,19 +159,58 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On(eventsRoute)
                     .WithProjection(typeof(MatchingEngineCallDeduplicationsProjection), Self)
 
+                    .ListeningCommands(typeof(NotifyBatchFailedCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<NotifyBatchFailedCommandHandler>()
+                    .PublishingEvents(typeof(BatchedOperationExecutionFailedEvent))
+                    .With(defaultPipeline)
+
+                    .ListeningCommands(typeof(NotifyBatchCompletedCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<NotifyBatchCompetedCommandHandler>()
+                    .PublishingEvents(typeof(BatchedOperationExecutionCompletedEvent))
+                    .With(defaultPipeline)
+
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024)
                     .ProcessingOptions(eventsRoute).MultiThreaded(4).QueueCapacity(1024)
                     .ProcessingOptions("client-operations").MultiThreaded(4).QueueCapacity(1024),
 
+
+                Register.BoundedContext(BlockchainCashoutBatchProcessorBoundedContext.Name)
+                    .FailedCommandRetryDelay(defaultRetryDelay)
+
+                    .ListeningCommands(typeof(AddOperationToBatchCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<AddOperationToBatchCommandHandler>()
+
+                    .ListeningCommands(typeof(SuspendActiveBatchCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<SuspendActiveBatchCommandHandler>()
+                    .PublishingEvents(typeof(BatchSuspendedEvent))
+                    .With(defaultPipeline)
+
+                    .ListeningCommands(typeof(DeleteActiveBatchCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<DeleteActiveBatchCommandHandler>()
+
+                    .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024)
+                    .ProcessingOptions(eventsRoute).MultiThreaded(4).QueueCapacity(1024),
+
                 Register.Saga<CashoutSaga>($"{Self}.saga")
-                    .ListeningEvents(
-                        typeof(CashoutStartedEvent)
-                        )
+                    .ListeningEvents(typeof(CashoutStartedEvent))
                     .From(Self)
                     .On(defaultRoute)
                     .PublishingCommands(
                         typeof(BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand))
                     .To(BlockchainOperationsExecutorBoundedContext.Name)
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(typeof(CashoutBatchingStartedEvent))
+                    .From(Self)
+                    .On(defaultRoute)
+                    .PublishingCommands(
+                        typeof(AddOperationToBatchCommand))
+                    .To(BlockchainCashoutBatchProcessorBoundedContext.Name)
                     .With(defaultPipeline)
 
                     .ListeningEvents(
@@ -174,6 +220,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On(defaultRoute)
                     .PublishingCommands(typeof(NotifyCashoutCompletedCommand),
                         typeof(NotifyCashoutFailedCommand))
+                    .To(Self)
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(
+                        typeof(BatchedOperationExecutionCompletedEvent),
+                        typeof(BatchedOperationExecutionFailedEvent))
+                    .From(Self)
+                    .On(defaultRoute)
+                    .PublishingCommands(typeof(NotifyCashoutCompletedCommand))
                     .To(Self)
                     .With(defaultPipeline),
 
@@ -191,7 +246,39 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingCommands(typeof(NotifyCashinCompletedCommand),
                                         typeof(NotifyCashoutCompletedCommand))
                     .To(Self)
-                    .With(defaultPipeline)
+                    .With(defaultPipeline),
+
+                 Register.Saga<CashoutBatchSaga>($"{Self}.batch-saga")
+                     .ListeningEvents(typeof(BatchExecutionStartedEvent))
+                     .From(BlockchainOperationsExecutorBoundedContext.Name)
+                     .On(defaultRoute)
+                     .PublishingCommands(typeof(SuspendActiveBatchCommand))
+                     .To(BlockchainOperationsExecutorBoundedContext.Name)
+                     .With(defaultPipeline)
+                     
+                     .ListeningEvents(typeof(BatchSuspendedEvent))
+                     .From(BlockchainOperationsExecutorBoundedContext.Name)
+                     .On(defaultRoute)
+                     .PublishingCommands(typeof(BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand))
+                     .To(BlockchainOperationsExecutorBoundedContext.Name)
+                     .With(defaultPipeline)
+                     .PublishingCommands(typeof(BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand))
+                     .To(BlockchainOperationsExecutorBoundedContext.Name)
+                     .With(defaultPipeline)
+
+                     .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
+                     .From(BlockchainOperationsExecutorBoundedContext.Name)
+                     .On(defaultRoute)
+                     .PublishingCommands(typeof(NotifyBatchCompletedCommand))
+                     .To(BlockchainCashoutProcessorBoundedContext.Name)
+                     .With(defaultPipeline)
+
+                     .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
+                     .From(BlockchainOperationsExecutorBoundedContext.Name)
+                     .On(defaultRoute)
+                     .PublishingCommands(typeof(NotifyBatchFailedCommand))
+                     .To(BlockchainCashoutProcessorBoundedContext.Name)
+                     .With(defaultPipeline)
                 );
         }
     }

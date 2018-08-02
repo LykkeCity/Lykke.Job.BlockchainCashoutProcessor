@@ -1,7 +1,7 @@
 ﻿using System;
 using MessagePack;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
 {
     [MessagePackObject]
     public class SuspendActiveBatchCommand
