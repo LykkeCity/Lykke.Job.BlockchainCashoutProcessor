@@ -39,6 +39,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 .As<ICrossClientCashoutRepository>()
                 .SingleInstance();
 
+            builder.Register(c => ActiveBatchRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
+                .As<IActiveBatchRepository>()
+                .SingleInstance();
+
             builder.Register(c => MatchingEngineCallsDeduplicationRepository.Create(_dbSettings.Nested(x => x.DataConnString), _log))
                 .As<IMatchingEngineCallsDeduplicationRepository>()
                 .SingleInstance();

@@ -31,6 +31,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         public decimal? Fee { get; set; }
         public string Error { get; set; }
 
+        public Guid? BatchId { get; set; }
+
         // ReSharper restore MemberCanBePrivate.Global
 
         #endregion
@@ -78,7 +80,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 TransactionHash = aggregate.TransactionHash,
                 TransactionAmount = aggregate.TransactionAmount,
                 Fee = aggregate.Fee,
-                Error = aggregate.Error
+                Error = aggregate.Error,
+                BatchId = aggregate.BatchId
             };
         }
 
@@ -101,7 +104,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 TransactionHash,
                 TransactionAmount,
                 Fee,
-                Error);
+                Error,
+                BatchId);
         }
 
         #endregion
