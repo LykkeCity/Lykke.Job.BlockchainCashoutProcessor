@@ -4,7 +4,6 @@
     {
         Started,
         Closed,
-        Executed,
         Finished
     }
 }

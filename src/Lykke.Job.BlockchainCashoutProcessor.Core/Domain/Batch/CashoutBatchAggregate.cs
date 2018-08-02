@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
 {
@@ -57,11 +57,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             string blockchainType,
             string blockchainAssetId,
             bool includeFee,
-            string hotWalletAddress)
+            string hotWalletAddress,
+            DateTime statedAt)
         {
             return new CashoutBatchAggregate(
                 state: CashoutBatchState.Started,
-                startedAt: DateTime.UtcNow, 
+                startedAt: statedAt, 
                 closedAt: null,
                 finishedAt: null,
                 batchId: batchId,
@@ -96,45 +97,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             State = state;
             HotWalletAddress = hotWalletAddress;
         }
-        
-        public bool IsBatchFinished(BlockchainCashoutAggregationConfiguration aggregationConfiguration)
-        {
-            return DateTime.UtcNow - StartedAt > aggregationConfiguration.MaxPeriod 
-                   && ToOperations.Length > aggregationConfiguration.MaxCount;
-        }
 
-        public bool OnCashoutBatchStarted()
+        public bool OnBatchStarted()
         {
             return State == CashoutBatchState.Started;
         }
-        /// <summary>
-        /// return true if aggregate already contains operation or able to add operation 
-        /// </summary>
-        public bool OnCashoutBatchOperationAdded(Guid operationId, 
-            decimal operationAmount,
-            string operationDestinationAddress)
+
+        public bool OnBatchClosed(IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operationsInBatch)
         {
-            var alreadyContainsOperation = ToOperations.Any(p => p.operationId == operationId);
-
-            if (State != CashoutBatchState.Started)
-                return alreadyContainsOperation;
-
-            if (!alreadyContainsOperation)
-            {
-                var list = ToOperations.ToList();
-                list.Add((operationId, operationAmount, operationDestinationAddress));
-                ToOperations = list.ToArray();
-            }
-
-            return true;
-        }
-
-        public bool OnCashoutBatchClosed()
-        {
-            var result =  State == CashoutBatchState.Closed;
+            var result = State == CashoutBatchState.Closed;
 
             ClosedAt = DateTime.UtcNow;
-            State = CashoutBatchState.Finished;
+            State = CashoutBatchState.Closed;
+            ToOperations = operationsInBatch.ToArray();
 
             return result;
         }

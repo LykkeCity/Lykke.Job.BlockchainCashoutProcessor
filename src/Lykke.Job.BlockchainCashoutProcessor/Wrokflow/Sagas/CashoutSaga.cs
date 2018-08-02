@@ -8,6 +8,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Mappers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
@@ -87,9 +88,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.State == CashoutState.AggregatedOperationStarted)
             {
-                // TODO: Add tag (cashin/cashiout) to the operation, and pass it to the operations executor?
-
-                gfg
+                sender.SendCommand(new AddOperationToBatchCommand
+                {
+                    BlockchainType = aggregate.BlockchainType,
+                    BlockchainAssetId = aggregate.BlockchainAssetId,
+                    OperationId = aggregate.OperationId,
+                    HotWalletAddress = aggregate.HotWalletAddress,
+                    Amount = aggregate.Amount,
+                    ToAddress = aggregate.ToAddress
+                }, BlockchainCashoutProcessorBoundedContext.Name);
             }
         }
 

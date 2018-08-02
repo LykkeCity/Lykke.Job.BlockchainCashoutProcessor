@@ -24,7 +24,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
             {
                 _chaosKitty.Meow(op.operationId);
 
-                publisher.PublishEvent(new OperationExecutionFailedEvent()
+                publisher.PublishEvent(new OperationExecutionFailedEvent
                 {
                     OperationId = op.operationId,
                     ErrorCode = command.ErrorCode,

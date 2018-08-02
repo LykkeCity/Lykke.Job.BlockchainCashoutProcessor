@@ -20,5 +20,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batch
 
         [Key(3)]
         public bool IncludeFee { get; set; }
+
+        public DateTime StartedAt { get; set; }
     }
 }
