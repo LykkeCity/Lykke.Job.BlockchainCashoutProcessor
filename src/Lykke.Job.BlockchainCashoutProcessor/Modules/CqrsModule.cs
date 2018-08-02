@@ -7,9 +7,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections;
@@ -61,11 +59,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 }),
                 new RabbitMqTransportFactory());
 
-            builder.Register(c => new RetryDelayProvider(
-                    _settings.WaitForBatchClosingRetryDelay,
-                    _settings.RetryDelay))
-                .AsSelf();
-
             // Sagas
             builder.RegisterType<CashoutSaga>();
             builder.RegisterType<CrossClientCashoutSaga>();
@@ -82,7 +75,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<NotifyBatchFailedCommandHandler>();
             builder.RegisterType<NotifyBatchCompetedCommandHandler>();
             builder.RegisterType<SuspendActiveBatchCommandHandler>();
-
+            builder.RegisterType<StartBatchExecutionCommandHandler>();
+            
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
 
@@ -178,6 +172,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
                 Register.BoundedContext(BlockchainCashoutBatchProcessorBoundedContext.Name)
                     .FailedCommandRetryDelay(defaultRetryDelay)
+
+                    .ListeningCommands(typeof(StartBatchExecutionCommand))
+                    .On(defaultRoute)
+                    .WithLoopback()
+                    .WithCommandsHandler<StartBatchExecutionCommandHandler>()
+                    .PublishingEvents(typeof(BatchExecutionStartedEvent))
+                    .With(defaultPipeline)
 
                     .ListeningCommands(typeof(AddOperationToBatchCommand))
                     .On(defaultRoute)

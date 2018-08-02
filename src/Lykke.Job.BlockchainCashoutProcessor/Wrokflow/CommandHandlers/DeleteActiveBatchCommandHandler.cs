@@ -2,6 +2,8 @@
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 

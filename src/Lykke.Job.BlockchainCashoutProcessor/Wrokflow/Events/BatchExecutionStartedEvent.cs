@@ -15,12 +15,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
         [Key(2)]
         public string BlockchainAssetId { get; set; }
 
-        [Key(2)]
+        [Key(3)]
         public string HotWallet { get; set; }
 
-        [Key(3)]
+        [Key(4)]
         public bool IncludeFee { get; set; }
 
+        [Key(5)]
         public DateTime StartedAt { get; set; }
     }
 }

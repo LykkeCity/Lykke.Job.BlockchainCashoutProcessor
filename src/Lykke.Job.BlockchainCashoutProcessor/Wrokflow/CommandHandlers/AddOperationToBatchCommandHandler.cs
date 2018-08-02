@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 
@@ -15,7 +16,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         private readonly IChaosKitty _chaosKitty;
 
         public AddOperationToBatchCommandHandler(IActiveBatchRepository activeBatchRepository, 
-            IChaosKitty chaosKitty, RetryDelayProvider retryDelayProvider)
+            IChaosKitty chaosKitty)
         {
             _activeBatchRepository = activeBatchRepository;
             _chaosKitty = chaosKitty;

@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables;
 using Common.Log;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
 using Lykke.SettingsReader;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
@@ -72,6 +73,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
             var entity = await _storage.GetDataAsync(partitionKey, rowKey);
 
             return entity?.BatchId == batchId ? entity.ToDomain() : null;
+        }
+
+        public async Task<IEnumerable<ActiveBatchAggregate>> GetAsync(string blockchainType)
+        {
+            var partitionKey = ActiveBatchEntity.GeneratePartitionKey(blockchainType);
+
+            return (await _storage.GetDataAsync(partitionKey)).Select(p => p.ToDomain());
         }
 
         public async Task SaveAsync(ActiveBatchAggregate aggregate)

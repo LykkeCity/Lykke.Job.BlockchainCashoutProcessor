@@ -1,9 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Repositories
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
 {
     public interface IActiveBatchRepository
     {
@@ -21,6 +20,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Repositories
             string hotWalletAddress,
             string blockchainAssetId,
             Guid batchId);
+
+        Task<IEnumerable<ActiveBatchAggregate>> GetAsync(string blockchainType);
 
         Task SaveAsync(ActiveBatchAggregate aggregate);
     }

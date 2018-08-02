@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
 {
     public class ActiveBatchAggregate
     {
@@ -72,6 +73,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             StartedAt = startedAt;
             Operations = operations.ToList();
             IsSuspended = isSuspended;
+        }
+        
+        public bool NeedToStartBatchExecution(BlockchainCashoutAggregationConfiguration aggregationSettings)
+        {
+            return  !IsSuspended && (DateTime.UtcNow - StartedAt >= aggregationSettings.MaxPeriod ||
+                   Operations.Count >= aggregationSettings.MaxCount);
         }
 
         public void AddOperation(Guid operationId, string destinationAddress, decimal amount)

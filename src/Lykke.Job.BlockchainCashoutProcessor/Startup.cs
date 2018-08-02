@@ -76,7 +76,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                 builder.RegisterModule(new BlockchainsModule(
                     Log, 
                     appSettings.CurrentValue.BlockchainsIntegration,
-                    appSettings.CurrentValue.BlockchainWalletsServiceClient));
+                    appSettings.CurrentValue.BlockchainWalletsServiceClient,
+                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.BatchMonitoring));
                 builder.RegisterModule(new CqrsModule(
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Cqrs,
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Workflow,

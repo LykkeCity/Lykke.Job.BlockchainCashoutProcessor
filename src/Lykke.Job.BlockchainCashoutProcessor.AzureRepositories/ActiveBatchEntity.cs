@@ -1,6 +1,7 @@
 ﻿using System;
 using Common;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories

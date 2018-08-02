@@ -10,7 +10,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
         [Key(0)]
         public Guid BatchId { get; set; }
 
-        [Key(0)]
+        [Key(1)]
         public IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> Operations { get; set; }
     }
 }

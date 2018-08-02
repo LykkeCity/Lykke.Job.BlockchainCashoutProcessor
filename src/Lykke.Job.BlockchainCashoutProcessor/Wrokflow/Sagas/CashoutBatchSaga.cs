@@ -106,7 +106,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     Fee = evt.Fee,
                     BatchId = aggregate.BatchId,
                     ToOperations = aggregate.ToOperations
-                }, Self);
+                }, BlockchainCashoutProcessorBoundedContext.Name);
 
                 _chaosKitty.Meow(evt.OperationId);
 
@@ -133,7 +133,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     ToOperations = aggregate.ToOperations,
                     Error = evt.Error,
                     ErrorCode = evt.ErrorCode
-                }, Self);
+                }, BlockchainCashoutProcessorBoundedContext.Name);
                 
                 _chaosKitty.Meow(evt.OperationId);
 
