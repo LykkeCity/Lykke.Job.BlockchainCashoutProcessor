@@ -29,15 +29,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         private readonly CqrsSettings _settings;
         private readonly WorkflowSettings _workflowSettings;
         private readonly ILog _log;
+        private readonly string _rabbitMqVirtualHost;
 
         public CqrsModule(
             CqrsSettings settings,
             WorkflowSettings workflowSettings,
-            ILog log)
+            ILog log, 
+            string rabbitMqVirtualHost = null)
         {
             _settings = settings;
             _workflowSettings = workflowSettings;
             _log = log;
+            _rabbitMqVirtualHost = rabbitMqVirtualHost;
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -48,12 +51,17 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             {
                 Uri = _settings.RabbitConnectionString
             };
+
+            var rabbitMqEndpoint = _rabbitMqVirtualHost == null
+                ? rabbitMqSettings.Endpoint.ToString()
+                : $"{rabbitMqSettings.Endpoint}/{_rabbitMqVirtualHost}";
+
             var messagingEngine = new MessagingEngine(_log,
                 new TransportResolver(new Dictionary<string, TransportInfo>
                 {
                     {
                         "RabbitMq",
-                        new TransportInfo(rabbitMqSettings.Endpoint.ToString(), rabbitMqSettings.UserName,
+                        new TransportInfo(rabbitMqEndpoint, rabbitMqSettings.UserName,
                             rabbitMqSettings.Password, "None", "RabbitMq")
                     }
                 }),
