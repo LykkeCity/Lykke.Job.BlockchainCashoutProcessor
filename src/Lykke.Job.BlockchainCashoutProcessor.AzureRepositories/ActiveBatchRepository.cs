@@ -28,7 +28,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
             _storage = storage;
         }
 
-        public  Task<bool> DeleteIfExistAsync(string blockchainType, string hotWalletAddress, string blockchainAssetId, Guid batchId)
+        public  Task<bool> DeleteIfExistAsync(string blockchainType,
+            string hotWalletAddress, 
+            string blockchainAssetId,
+            Guid batchId)
         {
             var partitionKey = ActiveBatchEntity.GeneratePartitionKey(blockchainType);
             var rowKey = ActiveBatchEntity.GenerateRowKey(blockchainAssetId, hotWalletAddress);
@@ -36,7 +39,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
             return _storage.DeleteIfExistAsync(partitionKey, rowKey, e => e.BatchId == batchId);
         }
 
-        public async Task<ActiveBatchAggregate> GetOrAddAsync(string blockchainType, string hotWalletAddress, string blockchainAssetId, Func<ActiveBatchAggregate> newAggregateFactory)
+        public async Task<ActiveBatchAggregate> GetOrAddAsync(string blockchainType,
+            string hotWalletAddress, 
+            string blockchainAssetId, 
+            Func<ActiveBatchAggregate> newAggregateFactory)
         {
             var partitionKey = ActiveBatchEntity.GeneratePartitionKey(blockchainType);
             var rowKey = ActiveBatchEntity.GenerateRowKey(blockchainAssetId, hotWalletAddress);
@@ -53,6 +59,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 });
 
             return entity.ToDomain();
+        }
+
+        public async Task<ActiveBatchAggregate> TryGetAsync(string blockchainType,
+            string hotWalletAddress,
+            string blockchainAssetId,
+            Guid batchId)
+        {
+            var partitionKey = ActiveBatchEntity.GeneratePartitionKey(blockchainType);
+            var rowKey = ActiveBatchEntity.GenerateRowKey(blockchainAssetId, hotWalletAddress);
+
+            var entity = await _storage.GetDataAsync(partitionKey, rowKey);
+
+            return entity?.BatchId == batchId ? entity.ToDomain() : null;
         }
 
         public async Task SaveAsync(ActiveBatchAggregate aggregate)

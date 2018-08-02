@@ -24,7 +24,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
         
         [UsedImplicitly]
-        private async Task Handle(CashoutBatchStartedEvent evt, ICommandSender sender)
+        private async Task Handle(BatchExecutionStartedEvent evt, ICommandSender sender)
         {
             var aggregate = await _cashoutBatchRepository.GetOrAddAsync(evt.BatchId,
                 () => CashoutBatchAggregate.CreateNew(evt.BatchId,
@@ -38,12 +38,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnBatchStarted())
             {
-                sender.SendCommand(new CloseBatchCommand
+                sender.SendCommand(new CloseActiveBatchCommand
                     {
-                        BatchId = aggregate.BatchId
+                        BatchId = aggregate.BatchId,
+                        BlockchainType = aggregate.BlockchainType,
+                        BlockchainAssetId = aggregate.BlockchainAssetId,
+                        HotWalletAddress = aggregate.HotWalletAddress
                     }, 
                     Self);
-
 
                 _chaosKitty.Meow(evt.BatchId);
 
@@ -70,6 +72,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 }, BlockchainOperationsExecutorBoundedContext.Name);
 
                 _chaosKitty.Meow(evt.BatchId);
+
+                sender.SendCommand(new DeleteActiveBatchCommand
+                    {
+                        BatchId = aggregate.BatchId,
+                        BlockchainType = aggregate.BlockchainType,
+                        BlockchainAssetId = aggregate.BlockchainAssetId,
+                        HotWalletAddress = aggregate.HotWalletAddress
+                    },
+                    Self);
 
                 await _cashoutBatchRepository.SaveAsync(aggregate);
             }

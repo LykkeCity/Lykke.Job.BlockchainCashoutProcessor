@@ -17,6 +17,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Repositories
             string blockchainAssetId,
             Func<ActiveBatchAggregate> newAggregateFactory);
 
+        Task<ActiveBatchAggregate> TryGetAsync(string blockchainType,
+            string hotWalletAddress,
+            string blockchainAssetId,
+            Guid batchId);
+
         Task SaveAsync(ActiveBatchAggregate aggregate);
     }
 }

@@ -61,7 +61,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 new RabbitMqTransportFactory());
 
             builder.Register(c => new RetryDelayProvider(
-                    _settings.WaitForBatchClosingRetryDelay))
+                    _settings.WaitForBatchClosingRetryDelay,
+                    _settings.RetryDelay))
                 .AsSelf();
 
             // Sagas

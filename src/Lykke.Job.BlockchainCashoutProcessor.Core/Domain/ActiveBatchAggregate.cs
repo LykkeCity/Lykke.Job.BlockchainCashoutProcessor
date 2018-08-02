@@ -18,6 +18,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public string Version { get; }
 
+        public bool IsClosed { get; private set; }
+
         public ICollection<(Guid operationId, decimal amount, string destinationAddress)> Operations { get; private set; }
 
         public static ActiveBatchAggregate StartNew(string blockChainType, 
@@ -30,7 +32,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 batchId:Guid.NewGuid(), 
                 version: null,
                 startedAt: DateTime.UtcNow, 
-                operations:Enumerable.Empty<(Guid operationId, decimal amount, string destinationAddress)>());
+                operations:Enumerable.Empty<(Guid operationId, decimal amount, string destinationAddress)>(),
+                isClosed: false);
         }
 
         public static ActiveBatchAggregate Restore(string blockchainType,
@@ -39,7 +42,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Guid batchId,
             string version,
             DateTime startedAt,
-            IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations)
+            IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations,
+            bool isClosed)
         {
             return new ActiveBatchAggregate(blockchainType,
                 blockchainAssetId,
@@ -47,7 +51,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 batchId: batchId,
                 version: version,
                 startedAt: startedAt,
-                operations: operations);
+                operations: operations,
+                isClosed: isClosed);
         }
 
         public ActiveBatchAggregate(string blockchainType,
@@ -56,7 +61,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Guid batchId,
             string version,
             DateTime startedAt,
-            IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations)
+            IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations,
+            bool isClosed)
         {
             BlockchainType = blockchainType;
             BlockchainAssetId = blockchainAssetId;
@@ -65,6 +71,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Version = version;
             StartedAt = startedAt;
             Operations = operations.ToList();
+            IsClosed = isClosed;
         }
 
         public void AddOperation(Guid operationId, string destinationAddress, decimal amount)
@@ -73,6 +80,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             {
                 Operations.Add((operationId, amount, destinationAddress));
             }
+        }
+
+        public void Close()
+        {
+            IsClosed = true;
         }
     }
 }

@@ -21,6 +21,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         public string Operations { get; set; }
 
+        public bool IsClosed { get; set; }
+
         #endregion
 
         #region Keys
@@ -51,7 +53,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 BlockchainType = aggregate.BlockchainType,
                 StartedAt = aggregate.StartedAt,
                 BlockchainAssetId = aggregate.BlockchainAssetId,
-                HotWallet = aggregate.HotWallet
+                HotWallet = aggregate.HotWallet,
+                IsClosed =  aggregate.IsClosed
             };
         }
 
@@ -64,7 +67,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 version: ETag,
                 startedAt: StartedAt,
                 operations: Operations
-                    .DeserializeJson<(Guid operationId, decimal amount, string destinationAddress)[]>());
+                    .DeserializeJson<(Guid operationId, decimal amount, string destinationAddress)[]>(),
+                isClosed: IsClosed);
         }
         
         #endregion

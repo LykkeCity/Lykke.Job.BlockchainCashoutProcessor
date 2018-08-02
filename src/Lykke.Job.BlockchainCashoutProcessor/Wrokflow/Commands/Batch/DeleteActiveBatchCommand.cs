@@ -1,10 +1,10 @@
 ﻿using System;
 using MessagePack;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch
 {
     [MessagePackObject]
-    public class CashoutBatchStartedEvent
+    public class DeleteActiveBatchCommand
     {
         [Key(0)]
         public Guid BatchId { get; set; }
@@ -15,12 +15,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batch
         [Key(2)]
         public string BlockchainAssetId { get; set; }
 
-        [Key(2)]
-        public string HotWallet { get; set; }
-
         [Key(3)]
-        public bool IncludeFee { get; set; }
-
-        public DateTime StartedAt { get; set; }
+        public string HotWalletAddress { get; set; }
     }
 }
