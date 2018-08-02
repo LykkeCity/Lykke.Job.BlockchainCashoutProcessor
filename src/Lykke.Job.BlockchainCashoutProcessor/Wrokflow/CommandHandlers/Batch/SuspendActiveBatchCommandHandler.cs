@@ -8,12 +8,12 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batch;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
 {
-    public class CloseActiveBatchCommandHandler
+    public class SuspendActiveBatchCommandHandler
     {
         private readonly IChaosKitty _chaosKitty;
         private readonly IActiveBatchRepository _activeBatchRepository;
 
-        public CloseActiveBatchCommandHandler(IChaosKitty chaosKitty,
+        public SuspendActiveBatchCommandHandler(IChaosKitty chaosKitty,
             IActiveBatchRepository activeBatchRepository)
         {
             _chaosKitty = chaosKitty;
@@ -21,23 +21,23 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
         }
         
         [UsedImplicitly]
-        public async Task<CommandHandlingResult> Handle(CloseActiveBatchCommand command, IEventPublisher publisher)
+        public async Task<CommandHandlingResult> Handle(SuspendActiveBatchCommand command, IEventPublisher publisher)
         {
             var activeBatch = await _activeBatchRepository.TryGetAsync(command.BlockchainType,
                 command.HotWalletAddress,
                 command.BlockchainAssetId,
                 command.BatchId);
             
-            //check batch already deleted
+            //check batch already disposed
             if (activeBatch != null)
             {
-                activeBatch.Close();
+                activeBatch.Suspend();
 
                 await _activeBatchRepository.SaveAsync(activeBatch);
 
                 _chaosKitty.Meow(command.BatchId);
 
-                publisher.PublishEvent(new BatchClosedEvent
+                publisher.PublishEvent(new BatchSuspendedEvent
                 {
                     BatchId = activeBatch.BatchId,
                     Operations = activeBatch.Operations

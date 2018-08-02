@@ -9,7 +9,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
         public string Version { get; }
         public DateTime StartedAt { get; }
 
-        public DateTime? ClosedAt { get; private set; }
+        public DateTime? SuspendedAt { get; private set; }
 
         public DateTime? FinishedAt { get; private set; }
 
@@ -30,7 +30,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
         public static CashoutBatchAggregate Restore(string version,
             CashoutBatchState state,
             DateTime startedAt,
-            DateTime? closedAt,
+            DateTime? suspendedAt,
             DateTime? executedAt,
             Guid batchId,
             string blockchainType,
@@ -42,7 +42,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             return new CashoutBatchAggregate(
                 state: CashoutBatchState.Started,
                 startedAt: startedAt,
-                closedAt: null,
+                suspendedAt: null,
                 finishedAt: null,
                 batchId: batchId,
                 blockchainType: blockchainType,
@@ -63,7 +63,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             return new CashoutBatchAggregate(
                 state: CashoutBatchState.Started,
                 startedAt: statedAt, 
-                closedAt: null,
+                suspendedAt: null,
                 finishedAt: null,
                 batchId: batchId,
                 blockchainType: blockchainType,
@@ -75,7 +75,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
 
         private CashoutBatchAggregate(CashoutBatchState state,
             DateTime startedAt,
-            DateTime? closedAt,
+            DateTime? suspendedAt,
             DateTime? finishedAt,
             Guid batchId,
             string blockchainType,
@@ -92,7 +92,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             IncludeFee = includeFee;
             ToOperations = toOperations;
             Version = version;
-            ClosedAt = closedAt;
+            SuspendedAt = suspendedAt;
             FinishedAt = finishedAt;
             State = state;
             HotWalletAddress = hotWalletAddress;
@@ -103,12 +103,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             return State == CashoutBatchState.Started;
         }
 
-        public bool OnBatchClosed(IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operationsInBatch)
+        public bool OnBatchSuspended(IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operationsInBatch)
         {
-            var result = State == CashoutBatchState.Closed;
+            var result = State == CashoutBatchState.Suspended;
 
-            ClosedAt = DateTime.UtcNow;
-            State = CashoutBatchState.Closed;
+            SuspendedAt = DateTime.UtcNow;
+            State = CashoutBatchState.Suspended;
             ToOperations = operationsInBatch.ToArray();
 
             return result;
@@ -116,7 +116,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
 
         public bool OnBatchCompeted()
         {
-            var result = State == CashoutBatchState.Closed;
+            var result = State == CashoutBatchState.Suspended;
 
             State = CashoutBatchState.Finished;
             FinishedAt = DateTime.UtcNow;
@@ -126,7 +126,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
 
         public bool OnBatchFailed()
         {
-            var result = State == CashoutBatchState.Closed;
+            var result = State == CashoutBatchState.Suspended;
 
             State = CashoutBatchState.Finished;
             FinishedAt = DateTime.UtcNow;

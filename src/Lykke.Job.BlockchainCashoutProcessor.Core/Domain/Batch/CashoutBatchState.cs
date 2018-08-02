@@ -3,7 +3,7 @@
     public enum CashoutBatchState
     {
         Started,
-        Closed,
+        Suspended,
         Finished
     }
 }

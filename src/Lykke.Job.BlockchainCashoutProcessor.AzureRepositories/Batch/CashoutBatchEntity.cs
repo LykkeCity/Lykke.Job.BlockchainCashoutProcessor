@@ -14,7 +14,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
 
         public DateTime StartedAt { get; set; }
 
-        public DateTime? ClosedAt { get; set; }
+        public DateTime? SuspendedAt { get; set; }
 
         public DateTime? FinishedAt { get; set; }
 
@@ -62,7 +62,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
                 RowKey = GetRowKey(aggregate.BatchId),
                 State = aggregate.State,
                 StartedAt = aggregate.StartedAt,
-                ClosedAt = aggregate.ClosedAt,
+                SuspendedAt = aggregate.SuspendedAt,
                 FinishedAt = aggregate.FinishedAt,
                 BlockchainAssetId = aggregate.BlockchainAssetId,
                 BlockchainType = aggregate.BlockchainType,
@@ -79,7 +79,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
                 ETag,
                 State,
                 StartedAt,
-                ClosedAt,
+                SuspendedAt,
                 FinishedAt,
                 BatchId,
                 BlockchainType,

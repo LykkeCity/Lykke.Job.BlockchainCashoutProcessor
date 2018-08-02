@@ -4,7 +4,7 @@ using MessagePack;
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batch
 {
     [MessagePackObject]
-    public class CloseActiveBatchCommand
+    public class SuspendActiveBatchCommand
     {
         [Key(0)]
         public Guid BatchId { get; set; }

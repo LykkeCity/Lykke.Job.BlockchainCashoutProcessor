@@ -24,8 +24,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batch
         {
             _chaosKitty.Meow(command.BatchId);
 
-            await _activeBatchRepository.DeleteIfExistAsync(command.BlockchainType, command.HotWalletAddress,
-                command.BlockchainAssetId, command.BatchId);
+            await _activeBatchRepository.DeleteIfExistAsync(command.BlockchainType, 
+                command.HotWalletAddress,
+                command.BlockchainAssetId,
+                command.BatchId);
 
             return CommandHandlingResult.Ok();
         }

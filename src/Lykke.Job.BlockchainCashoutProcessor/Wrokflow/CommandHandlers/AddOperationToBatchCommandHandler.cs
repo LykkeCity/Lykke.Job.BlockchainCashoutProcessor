@@ -13,14 +13,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
     {
         private readonly IActiveBatchRepository _activeBatchRepository;
         private readonly IChaosKitty _chaosKitty;
-        private readonly RetryDelayProvider _retryDelayProvider;
 
         public AddOperationToBatchCommandHandler(IActiveBatchRepository activeBatchRepository, 
             IChaosKitty chaosKitty, RetryDelayProvider retryDelayProvider)
         {
             _activeBatchRepository = activeBatchRepository;
             _chaosKitty = chaosKitty;
-            _retryDelayProvider = retryDelayProvider;
         }
 
         [UsedImplicitly]
@@ -34,15 +32,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             _chaosKitty.Meow(command.OperationId);
 
-            //wait for active batch to disposed and recreate new one
-            if (activeBatch.IsClosed)
-            {
-                return CommandHandlingResult.Fail(_retryDelayProvider.DefaultRetryDelay);
-            }
-
             activeBatch.AddOperation(command.OperationId, command.ToAddress, command.Amount);
 
             await _activeBatchRepository.SaveAsync(activeBatch);
+
+            _chaosKitty.Meow(command.OperationId);
 
             return CommandHandlingResult.Ok();
         }

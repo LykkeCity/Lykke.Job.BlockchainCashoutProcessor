@@ -38,7 +38,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnBatchStarted())
             {
-                sender.SendCommand(new CloseActiveBatchCommand
+                sender.SendCommand(new SuspendActiveBatchCommand
                     {
                         BatchId = aggregate.BatchId,
                         BlockchainType = aggregate.BlockchainType,
@@ -54,13 +54,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
 
         [UsedImplicitly]
-        private async Task Handle(BatchClosedEvent evt, ICommandSender sender)
+        private async Task Handle(BatchSuspendedEvent evt, ICommandSender sender)
         {
             var aggregate = await _cashoutBatchRepository.GetAsync(evt.BatchId);
 
             _chaosKitty.Meow(evt.BatchId);
 
-            if (aggregate.OnBatchClosed(evt.Operations))
+            if (aggregate.OnBatchSuspended(evt.Operations))
             {
                 sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand
                 {

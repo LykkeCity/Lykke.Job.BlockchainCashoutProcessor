@@ -18,7 +18,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public string Version { get; }
 
-        public bool IsClosed { get; private set; }
+        public bool IsSuspended { get; private set; }
 
         public ICollection<(Guid operationId, decimal amount, string destinationAddress)> Operations { get; private set; }
 
@@ -33,7 +33,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 version: null,
                 startedAt: DateTime.UtcNow, 
                 operations:Enumerable.Empty<(Guid operationId, decimal amount, string destinationAddress)>(),
-                isClosed: false);
+                isSuspended: false);
         }
 
         public static ActiveBatchAggregate Restore(string blockchainType,
@@ -43,7 +43,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string version,
             DateTime startedAt,
             IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations,
-            bool isClosed)
+            bool isSuspended)
         {
             return new ActiveBatchAggregate(blockchainType,
                 blockchainAssetId,
@@ -52,7 +52,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 version: version,
                 startedAt: startedAt,
                 operations: operations,
-                isClosed: isClosed);
+                isSuspended: isSuspended);
         }
 
         public ActiveBatchAggregate(string blockchainType,
@@ -62,7 +62,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             string version,
             DateTime startedAt,
             IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations,
-            bool isClosed)
+            bool isSuspended)
         {
             BlockchainType = blockchainType;
             BlockchainAssetId = blockchainAssetId;
@@ -71,20 +71,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Version = version;
             StartedAt = startedAt;
             Operations = operations.ToList();
-            IsClosed = isClosed;
+            IsSuspended = isSuspended;
         }
 
         public void AddOperation(Guid operationId, string destinationAddress, decimal amount)
         {
+            if (IsSuspended)
+            {
+                throw new ArgumentException("Batch is suspended");
+            }
             if (Operations.All(p => p.operationId != operationId))
             {
                 Operations.Add((operationId, amount, destinationAddress));
             }
         }
 
-        public void Close()
+        public void Suspend()
         {
-            IsClosed = true;
+            IsSuspended = true;
         }
     }
 }
