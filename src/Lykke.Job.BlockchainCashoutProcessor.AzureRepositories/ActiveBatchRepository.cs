@@ -18,7 +18,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         {
             var storage = AzureTableStorage<ActiveBatchEntity>.Create(
                 connectionString,
-                "Cashout",
+                "ActiveBatch",
                 log);
 
             return new ActiveBatchRepository(storage);
