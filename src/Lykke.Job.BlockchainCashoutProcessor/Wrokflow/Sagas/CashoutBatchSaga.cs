@@ -8,6 +8,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
+using Lykke.Job.BlockchainOperationsExecutor.Contract.Commands;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
@@ -68,7 +69,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     AssetId = aggregate.BlockchainAssetId,
                     FromAddress = aggregate.HotWalletAddress,
                     IncludeFee = aggregate.IncludeFee,
-                    To = aggregate.ToOperations.Select(p => (p.destinationAddress, p.amount)).ToArray()
+                    To = aggregate.ToOperations
+                        .Select(p => new OperationOutputContract {Address = p.destinationAddress, Amount = p.amount} )
+                        .ToArray()
                 }, BlockchainOperationsExecutorBoundedContext.Name);
 
                 _chaosKitty.Meow(evt.BatchId);
