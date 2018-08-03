@@ -22,9 +22,5 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings.Blockchain
 
         [Optional]
         public CashoutAggregationSettings CashoutAggregation { get; set; }
-
-        [HttpCheck("/api/isalive")]
-        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
-        public string ApiUrl { get; set; }
     }
 }
