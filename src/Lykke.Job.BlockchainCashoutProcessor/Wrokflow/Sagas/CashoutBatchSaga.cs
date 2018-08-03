@@ -100,17 +100,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnBatchCompeted())
             {
-                sender.SendCommand(new NotifyBatchCompletedCommand
-                {
-                    Block = evt.Block,
-                    Fee = evt.Fee,
-                    BatchId = aggregate.BatchId,
-                    ToOperations = aggregate.ToOperations
-                }, BlockchainCashoutProcessorBoundedContext.Name);
-
-                _chaosKitty.Meow(evt.OperationId);
-
                 await _cashoutBatchRepository.SaveAsync(aggregate);
+                
+                _chaosKitty.Meow(evt.OperationId);
             }
         }
 
@@ -127,17 +119,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnBatchFailed())
             {
-                sender.SendCommand(new NotifyBatchFailedCommand
-                {
-                    BatchId = aggregate.BatchId,
-                    ToOperations = aggregate.ToOperations,
-                    Error = evt.Error,
-                    ErrorCode = evt.ErrorCode
-                }, BlockchainCashoutProcessorBoundedContext.Name);
-                
-                _chaosKitty.Meow(evt.OperationId);
-
                 await _cashoutBatchRepository.SaveAsync(aggregate);
+
+                _chaosKitty.Meow(evt.OperationId);
             }
         }
     }

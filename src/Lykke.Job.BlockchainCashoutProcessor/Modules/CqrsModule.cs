@@ -80,8 +80,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<OperationCompletedCommandsHandler>();
             builder.RegisterType<NotifyCashoutFailedCommandsHandler>();
             builder.RegisterType<DeleteActiveBatchCommandHandler>();
-            builder.RegisterType<NotifyBatchFailedCommandHandler>();
-            builder.RegisterType<NotifyBatchCompetedCommandHandler>();
             builder.RegisterType<SuspendActiveBatchCommandHandler>();
             builder.RegisterType<StartBatchExecutionCommandHandler>();
             builder.RegisterType<AddOperationToBatchCommandHandler>();
@@ -161,18 +159,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .From(Self)
                     .On(eventsRoute)
                     .WithProjection(typeof(MatchingEngineCallDeduplicationsProjection), Self)
-
-                    .ListeningCommands(typeof(NotifyBatchFailedCommand))
-                    .On(defaultRoute)
-                    .WithCommandsHandler<NotifyBatchFailedCommandHandler>()
-                    .PublishingEvents(typeof(BatchedOperationExecutionFailedEvent))
-                    .With(defaultPipeline)
-
-                    .ListeningCommands(typeof(NotifyBatchCompletedCommand))
-                    .On(defaultRoute)
-                    .WithCommandsHandler<NotifyBatchCompetedCommandHandler>()
-                    .PublishingEvents(typeof(BatchedOperationExecutionCompletedEvent))
-                    .With(defaultPipeline)
 
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024)
                     .ProcessingOptions(eventsRoute).MultiThreaded(4).QueueCapacity(1024)
