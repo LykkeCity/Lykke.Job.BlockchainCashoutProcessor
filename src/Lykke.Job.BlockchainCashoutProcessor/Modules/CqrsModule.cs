@@ -84,7 +84,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<NotifyBatchCompetedCommandHandler>();
             builder.RegisterType<SuspendActiveBatchCommandHandler>();
             builder.RegisterType<StartBatchExecutionCommandHandler>();
-            
+            builder.RegisterType<AddOperationToBatchCommandHandler>();
+
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
 
