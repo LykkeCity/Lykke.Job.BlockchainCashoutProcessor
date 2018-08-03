@@ -265,16 +265,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                      .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
                      .From(BlockchainOperationsExecutorBoundedContext.Name)
                      .On(defaultRoute)
-                     .PublishingCommands(typeof(NotifyBatchCompletedCommand))
-                     .To(BlockchainCashoutProcessorBoundedContext.Name)
-                     .With(defaultPipeline)
 
                      .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
                      .From(BlockchainOperationsExecutorBoundedContext.Name)
                      .On(defaultRoute)
-                     .PublishingCommands(typeof(NotifyBatchFailedCommand))
-                     .To(BlockchainCashoutProcessorBoundedContext.Name)
-                     .With(defaultPipeline)
                 );
         }
     }
