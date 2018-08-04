@@ -105,7 +105,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
 
         public bool OnBatchSuspended(IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operationsInBatch)
         {
-            var result = State == CashoutBatchState.Suspended;
+            var result = State == CashoutBatchState.Started;
 
             SuspendedAt = DateTime.UtcNow;
             State = CashoutBatchState.Suspended;

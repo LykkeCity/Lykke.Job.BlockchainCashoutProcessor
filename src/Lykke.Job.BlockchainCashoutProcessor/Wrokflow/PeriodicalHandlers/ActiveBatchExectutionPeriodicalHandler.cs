@@ -58,8 +58,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.PeriodicalHandlers
                         BlockchainAssetId = batch.BlockchainAssetId,
                         HotWallet = batch.HotWallet
                     },
-                    BlockchainCashoutBatchProcessorBoundedContext.Name,
-                    BlockchainCashoutBatchProcessorBoundedContext.Name
+                    BlockchainCashoutProcessorBoundedContext.Name,
+                    BlockchainCashoutProcessorBoundedContext.Name
                 );
             }
         }

@@ -85,7 +85,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
         {
             if (IsSuspended)
             {
-                throw new ArgumentException("Batch is suspended");
+                throw new ArgumentException("Batch is suspended. Retry after active batch disposed");
             }
             if (Operations.All(p => p.operationId != operationId))
             {

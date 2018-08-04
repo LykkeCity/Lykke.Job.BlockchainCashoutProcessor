@@ -15,7 +15,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
     {
         private readonly IChaosKitty _chaosKitty;
         private readonly ICashoutBatchRepository _cashoutBatchRepository;
-        private static string Self => BlockchainCashoutBatchProcessorBoundedContext.Name;
+        private static string Self => BlockchainCashoutProcessorBoundedContext.Name;
 
         public CashoutBatchSaga(IChaosKitty chaosKitty, ICashoutBatchRepository cashoutBatchRepository)
         {

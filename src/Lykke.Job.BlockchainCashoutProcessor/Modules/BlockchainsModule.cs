@@ -70,7 +70,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         .WithParameter(TypedParameter.From(blockchain.CashoutAggregation))
                         .WithParameter(TypedParameter.From(blockchain.Type))
                         .WithParameter(TypedParameter.From(_batchMonitoringSettings.Period))
-                        .WithParameter(TypedParameter.From(blockchainConfiguration.CashoutAggregation));
+                        .WithParameter(TypedParameter.From(blockchainConfiguration.CashoutAggregation))
+                        .As<IStartable>()
+                        .AutoActivate();
                 }
             }
 

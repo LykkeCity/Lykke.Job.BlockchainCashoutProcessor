@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
 {
+    [MessagePackObject]
     public class StartBatchExecutionCommand
     {
         [Key(0)]
