@@ -217,15 +217,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingCommands(typeof(NotifyCashoutCompletedCommand),
                         typeof(NotifyCashoutFailedCommand))
                     .To(Self)
-                    .With(defaultPipeline)
-
-                    .ListeningEvents(
-                        typeof(BatchedOperationExecutionCompletedEvent),
-                        typeof(BatchedOperationExecutionFailedEvent))
-                    .From(Self)
-                    .On(defaultRoute)
-                    .PublishingCommands(typeof(NotifyCashoutCompletedCommand))
-                    .To(Self)
                     .With(defaultPipeline),
 
                  Register.Saga<CrossClientCashoutSaga>($"{Self}.cross-client-saga")
