@@ -3,11 +3,10 @@ using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables;
 using Common.Log;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.SettingsReader;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 {
     public class CashoutBatchRepository:ICashoutBatchRepository
     {

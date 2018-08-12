@@ -4,7 +4,8 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
+using Lykke.Job.BlockchainCashoutProcessor.ContractMapping;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -60,21 +61,27 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             _chaosKitty.Meow(evt.BatchId);
 
-            if (aggregate.OnBatchSuspended(evt.Operations))
+            var cashouts = evt.Cashouts
+                .Select(BatchedCashoutMapper.ToDmoain)
+                .ToArray();
+
+            if (aggregate.OnBatchSuspended(cashouts))
             {
-                sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand
-                {
-                    OperationId = aggregate.BatchId,
-                    AssetId = aggregate.BlockchainAssetId,
-                    FromAddress = aggregate.HotWalletAddress,
-                    IncludeFee = aggregate.IncludeFee,
-                    To = aggregate.ToOperations
-                        .Select(p => new BlockchainOperationsExecutor.Contract.Commands.OperationOutputContract { Address = p.destinationAddress, Amount = p.amount} )
-                        .ToArray(),
-                    OperationIdsFromBatch = aggregate.ToOperations
-                        .Select(p => p.operationId)
-                        .ToArray()
-                }, BlockchainOperationsExecutorBoundedContext.Name);
+                sender.SendCommand(
+                    new BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand
+                    {
+                        OperationId = aggregate.BatchId,
+                        AssetId = aggregate.BlockchainAssetId,
+                        FromAddress = aggregate.HotWalletAddress,
+                        IncludeFee = aggregate.IncludeFee,
+                        ToEndpoints = aggregate.Cashouts
+                            .Select(x => new BlockchainOperationsExecutor.Contract.Commands.OperationEndpoint
+                            {
+                                Address = x.DestinationAddress,
+                                Amount = x.Amount
+                            })
+                            .ToArray()
+                    }, BlockchainOperationsExecutorBoundedContext.Name);
 
                 _chaosKitty.Meow(evt.BatchId);
 
@@ -103,10 +110,25 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
 
-            if (aggregate.OnBatchCompeted())
+            if (aggregate.OnBatchCompeted(evt.TransactionHash, evt.TransactionAmount, evt.Fee, evt.Block))
             {
                 await _cashoutBatchRepository.SaveAsync(aggregate);
+
+                sender.SendCommand
+                (
+                    new NotifyCashoutBatchCompletedCommand
+                    {
+                        BatchId = aggregate.BatchId,
+                        BlockchainAssetId = aggregate.BlockchainAssetId,
+                        Cashouts = aggregate.Cashouts
+                            .Select(x => BatchedCashoutMapper.FromDomain(x))
+                            .ToArray(),
+                        TransactionHash = aggregate.TransactionHash
+                    },
+                    BlockchainCashoutProcessorBoundedContext.Name
+                );
                 
+
                 _chaosKitty.Meow(evt.OperationId);
             }
         }

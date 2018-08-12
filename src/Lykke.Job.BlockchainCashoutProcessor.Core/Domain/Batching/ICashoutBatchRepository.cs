@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 {
     public interface ICashoutBatchRepository
     {

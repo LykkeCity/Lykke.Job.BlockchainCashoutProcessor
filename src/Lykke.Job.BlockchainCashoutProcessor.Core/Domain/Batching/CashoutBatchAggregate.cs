@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 {
     public class CashoutBatchAggregate
     {
@@ -25,30 +24,30 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
         
         public CashoutBatchState State { get; private set; }
 
-        public (Guid operationId, decimal amount, string destinationAddress)[] ToOperations { get; private set; }
+        public IReadOnlyCollection<BatchedCashoutValueType> Cashouts { get; private set; }
 
         public static CashoutBatchAggregate Restore(string version,
             CashoutBatchState state,
             DateTime startedAt,
             DateTime? suspendedAt,
-            DateTime? executedAt,
+            DateTime? finishedAt,
             Guid batchId,
             string blockchainType,
             string blockchainAssetId,
             bool includeFee,
-            (Guid operationId, decimal amount, string destinationAddress)[] operations,
+            IReadOnlyCollection<BatchedCashoutValueType> cashouts,
             string hotWalletAddress)
         {
             return new CashoutBatchAggregate(
-                state: CashoutBatchState.Started,
+                state: state,
                 startedAt: startedAt,
-                suspendedAt: null,
-                finishedAt: null,
+                suspendedAt: suspendedAt,
+                finishedAt: finishedAt,
                 batchId: batchId,
                 blockchainType: blockchainType,
                 blockchainAssetId: blockchainAssetId,
                 includeFee: includeFee,
-                toOperations: operations,
+                cashouts: cashouts,
                 version: version,
                 hotWalletAddress: hotWalletAddress);
         }
@@ -69,7 +68,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
                 blockchainType: blockchainType,
                 blockchainAssetId: blockchainAssetId,
                 includeFee: includeFee,
-                toOperations: new(Guid operationId, decimal amount,string destinationAddress)[0],
+                cashouts: Array.Empty<BatchedCashoutValueType>(),
                 hotWalletAddress: hotWalletAddress);
         }
 
@@ -81,7 +80,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             string blockchainType,
             string blockchainAssetId,
             bool includeFee,
-            (Guid operationId, decimal amount, string destinationAddress)[] toOperations,
+            IReadOnlyCollection<BatchedCashoutValueType> cashouts,
             string hotWalletAddress,
             string version = null)
         {
@@ -90,7 +89,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             BlockchainAssetId = blockchainAssetId;
             BlockchainType = blockchainType;
             IncludeFee = includeFee;
-            ToOperations = toOperations;
+            Cashouts = cashouts;
             Version = version;
             SuspendedAt = suspendedAt;
             FinishedAt = finishedAt;
@@ -103,13 +102,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch
             return State == CashoutBatchState.Started;
         }
 
-        public bool OnBatchSuspended(IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operationsInBatch)
+        public bool OnBatchSuspended(IReadOnlyCollection<BatchedCashoutValueType> cashouts)
         {
             var result = State == CashoutBatchState.Started;
 
             SuspendedAt = DateTime.UtcNow;
             State = CashoutBatchState.Suspended;
-            ToOperations = operationsInBatch.ToArray();
+            Cashouts = cashouts;
 
             return result;
         }

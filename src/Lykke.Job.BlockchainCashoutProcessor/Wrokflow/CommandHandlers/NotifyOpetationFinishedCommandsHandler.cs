@@ -7,7 +7,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
     [UsedImplicitly]
-    public class OperationCompletedCommandsHandler
+    public class NotifyOpetationFinishedCommandsHandler
     {
         [UsedImplicitly]
         public Task<CommandHandlingResult> Handle(NotifyCashoutCompletedCommand command, IEventPublisher publisher)

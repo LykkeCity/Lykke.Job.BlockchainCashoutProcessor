@@ -1,10 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
+using Lykke.Job.BlockchainCashoutProcessor.ContractMapping;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 
@@ -42,7 +42,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 publisher.PublishEvent(new BatchSuspendedEvent
                 {
                     BatchId = activeBatch.BatchId,
-                    Operations = activeBatch.Operations
+                    Cashouts = activeBatch.Cashouts
+                        .Select(BatchedCashoutMapper.FromDomain)
+                        .ToArray()
                 });
             }
 

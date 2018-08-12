@@ -80,7 +80,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 await _cashoutRepository.SaveAsync(aggregate);
             }
 
-            sender.SendCommand(new NotifyCashoutCompletedCommand()
+            sender.SendCommand(new NotifyCashoutCompletedCommand
                 {
                     Amount = aggregate.Amount,
                     TransactionAmount = 0M,

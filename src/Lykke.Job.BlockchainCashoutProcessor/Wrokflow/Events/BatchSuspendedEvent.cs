@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
@@ -11,6 +10,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
         public Guid BatchId { get; set; }
 
         [Key(1)]
-        public IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> Operations { get; set; }
+        public BatchedCashout[] Cashouts { get; set; }
     }
 }

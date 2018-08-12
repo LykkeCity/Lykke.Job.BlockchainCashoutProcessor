@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 {
     public class ActiveBatchAggregate
     {
@@ -21,7 +20,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
 
         public bool IsSuspended { get; private set; }
 
-        public ICollection<(Guid operationId, decimal amount, string destinationAddress)> Operations { get; private set; }
+        public ISet<BatchedCashoutValueType> Cashouts { get; }
 
         public static ActiveBatchAggregate StartNew(string blockChainType, 
             string blockchainAssetId, 
@@ -30,10 +29,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
             return new ActiveBatchAggregate(blockChainType,
                 blockchainAssetId,
                 hotWallet,
-                batchId:Guid.NewGuid(), 
+                batchId: Guid.NewGuid(),
                 version: null,
-                startedAt: DateTime.UtcNow, 
-                operations:Enumerable.Empty<(Guid operationId, decimal amount, string destinationAddress)>(),
+                startedAt: DateTime.UtcNow,
+                cashouts: new HashSet<BatchedCashoutValueType>(),
                 isSuspended: false);
         }
 
@@ -43,7 +42,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
             Guid batchId,
             string version,
             DateTime startedAt,
-            IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations,
+            ISet<BatchedCashoutValueType> cashouts,
             bool isSuspended)
         {
             return new ActiveBatchAggregate(blockchainType,
@@ -52,17 +51,17 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
                 batchId: batchId,
                 version: version,
                 startedAt: startedAt,
-                operations: operations,
+                cashouts: cashouts,
                 isSuspended: isSuspended);
         }
 
-        public ActiveBatchAggregate(string blockchainType,
+        private ActiveBatchAggregate(string blockchainType,
             string blockchainAssetId,
             string hotWallet,
             Guid batchId,
             string version,
             DateTime startedAt,
-            IEnumerable<(Guid operationId, decimal amount, string destinationAddress)> operations,
+            ISet<BatchedCashoutValueType> cashouts,
             bool isSuspended)
         {
             BlockchainType = blockchainType;
@@ -71,14 +70,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
             BatchId = batchId;
             Version = version;
             StartedAt = startedAt;
-            Operations = operations.ToList();
+            Cashouts = cashouts;
             IsSuspended = isSuspended;
         }
         
         public bool NeedToStartBatchExecution(BlockchainCashoutAggregationConfiguration aggregationSettings)
         {
             return  !IsSuspended && (DateTime.UtcNow - StartedAt >= aggregationSettings.MaxPeriod ||
-                   Operations.Count >= aggregationSettings.MaxCount);
+                   Cashouts.Count >= aggregationSettings.MaxCount);
         }
 
         public void AddOperation(Guid operationId, string destinationAddress, decimal amount)
@@ -87,10 +86,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
             {
                 throw new ArgumentException("Batch is suspended. Retry after active batch disposed");
             }
-            if (Operations.All(p => p.operationId != operationId))
-            {
-                Operations.Add((operationId, amount, destinationAddress));
-            }
+
+            Cashouts.Add(new BatchedCashoutValueType(operationId, destinationAddress, amount));
         }
 
         public void Suspend()

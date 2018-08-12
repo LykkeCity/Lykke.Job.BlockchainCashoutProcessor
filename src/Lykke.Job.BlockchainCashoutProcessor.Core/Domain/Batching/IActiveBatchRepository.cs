@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch
+namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 {
     public interface IActiveBatchRepository
     {

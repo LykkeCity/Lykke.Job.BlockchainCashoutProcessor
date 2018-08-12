@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Linq;
 using Common;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batch;
-using Microsoft.WindowsAzure.Storage.Table;
+using JetBrains.Annotations;
+using Lykke.AzureStorage.Tables;
+using Lykke.AzureStorage.Tables.Entity.Annotation;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
+namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 {
-    internal class CashoutBatchEntity:TableEntity
+    [UsedImplicitly(ImplicitUseTargetFlags.Members)]
+    internal class CashoutBatchEntity : AzureTableEntity
     {
         #region Fields
 
@@ -25,12 +29,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
 
         public CashoutBatchState State { get; set; }
 
-        public string ToOperations { get; set; }
+        [JsonValueSerializer]
+        public BatchedCashoutEntity[] Cashouts { get; set; }
 
         public string HotWalletAddress { get; set; }
 
         #endregion
         
+
         #region Keys
 
         public static string GetPartitionKey(Guid operationId)
@@ -47,6 +53,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
         }
 
         #endregion
+
 
         #region Conversion
 
@@ -65,7 +72,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
                 BlockchainType = aggregate.BlockchainType,
                 IncludeFee = aggregate.IncludeFee,
                 BatchId = aggregate.BatchId,
-                ToOperations = aggregate.ToOperations.ToJson(),
+                Cashouts = aggregate.Cashouts
+                    .Select(BatchedCashoutEntity.FromDomain)
+                    .ToArray(),
                 HotWalletAddress = aggregate.HotWalletAddress
             };
         }
@@ -82,7 +91,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batch
                 BlockchainType,
                 BlockchainAssetId,
                 IncludeFee,
-                ToOperations.DeserializeJson<(Guid operationId, decimal amount, string destinationAddress)[]>(),
+                Cashouts
+                    .Select(x => x.ToDomain())
+                    .ToArray(),
                 HotWalletAddress);
         }
 

@@ -129,7 +129,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 throw new InvalidOperationException("Transaction fee should be not null here");
             }
 
-            sender.SendCommand(new NotifyCashoutCompletedCommand()
+            sender.SendCommand(new NotifyCashoutCompletedCommand
             {
                 Amount = aggregate.Amount,
                 TransactionAmount = aggregate.TransactionAmount.Value,

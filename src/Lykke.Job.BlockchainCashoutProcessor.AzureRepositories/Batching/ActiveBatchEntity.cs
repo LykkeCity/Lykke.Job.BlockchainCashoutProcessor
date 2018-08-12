@@ -1,12 +1,14 @@
 ﻿using System;
-using Common;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
-using Microsoft.WindowsAzure.Storage.Table;
+using System.Linq;
+using JetBrains.Annotations;
+using Lykke.AzureStorage.Tables;
+using Lykke.AzureStorage.Tables.Entity.Annotation;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
+namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 {
-    public class ActiveBatchEntity:TableEntity
+    [UsedImplicitly(ImplicitUseTargetFlags.Members)]
+    internal class ActiveBatchEntity : AzureTableEntity
     {
         #region Fields
 
@@ -20,11 +22,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         public Guid BatchId { get; set; }
 
-        public string Operations { get; set; }
+        [JsonValueSerializer]
+        public BatchedCashoutEntity[] Cashouts { get; set; }
 
         public bool IsSuspended { get; set; }
 
         #endregion
+
 
         #region Keys
         
@@ -40,6 +44,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
 
         #endregion
 
+
         #region Conversion
 
         public static ActiveBatchEntity FromDomain(ActiveBatchAggregate aggregate)
@@ -50,7 +55,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 RowKey = GenerateRowKey(aggregate.BlockchainAssetId, aggregate.HotWallet),
                 PartitionKey = GeneratePartitionKey(aggregate.BlockchainType),
                 ETag = string.IsNullOrEmpty(aggregate.Version) ? "*" : aggregate.Version,
-                Operations = aggregate.Operations.ToJson(),
+                Cashouts = aggregate.Cashouts
+                    .Select(BatchedCashoutEntity.FromDomain)
+                    .ToArray(),
                 BlockchainType = aggregate.BlockchainType,
                 StartedAt = aggregate.StartedAt,
                 BlockchainAssetId = aggregate.BlockchainAssetId,
@@ -67,8 +74,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
                 batchId: BatchId,
                 version: ETag,
                 startedAt: StartedAt,
-                operations: Operations
-                    .DeserializeJson<(Guid operationId, decimal amount, string destinationAddress)[]>(),
+                cashouts: Cashouts
+                    .Select(x=>x.ToDomain())
+                    .ToHashSet(),
                 isSuspended: IsSuspended);
         }
         

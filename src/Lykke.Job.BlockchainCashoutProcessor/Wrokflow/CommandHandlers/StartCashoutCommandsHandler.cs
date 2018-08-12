@@ -79,6 +79,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             if (!recipientClientId.HasValue)
             {
+                // TODO: It should be obtained from the BLockchain integration capabilities instead of settings
                 if (blockchainConfiguration.SupportCashoutAggregation)
                 {
                     publisher.PublishEvent(new CashoutBatchingStartedEvent

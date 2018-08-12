@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables;
 using Common.Log;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.ActiveBatch;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.SettingsReader;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
+namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 {
     public class ActiveBatchRepository:IActiveBatchRepository
     {
@@ -18,7 +18,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories
         {
             var storage = AzureTableStorage<ActiveBatchEntity>.Create(
                 connectionString,
-                "ActiveBatch",
+                "ActiveCashoutBatch",
                 log);
 
             return new ActiveBatchRepository(storage);

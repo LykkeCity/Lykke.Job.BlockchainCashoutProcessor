@@ -78,7 +78,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 .WithParameter(TypedParameter.From(_workflowSettings?.DisableDirectCrossClientCashouts ?? false));
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
-            builder.RegisterType<OperationCompletedCommandsHandler>();
+            builder.RegisterType<NotifyOpetationFinishedCommandsHandler>();
             builder.RegisterType<NotifyCashoutFailedCommandsHandler>();
             builder.RegisterType<DeleteActiveBatchCommandHandler>();
             builder.RegisterType<SuspendActiveBatchCommandHandler>();
@@ -119,7 +119,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningCommands(typeof(NotifyCashinCompletedCommand),
                         typeof(NotifyCashoutCompletedCommand))
                     .On(defaultRoute)
-                    .WithCommandsHandler<OperationCompletedCommandsHandler>()
+                    .WithCommandsHandler<NotifyOpetationFinishedCommandsHandler>()
                     .PublishingEvents(typeof(CashoutCompletedEvent),
                                       typeof(CashinCompletedEvent))
                     .With(eventsRoute)
