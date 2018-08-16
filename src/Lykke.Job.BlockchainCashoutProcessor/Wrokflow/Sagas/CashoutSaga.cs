@@ -89,6 +89,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 AssetId = aggregate.AssetId,
                 ClientId = aggregate.ClientId,
                 ToAddress = aggregate.ToAddress,
+                OperationId = aggregate.OperationId,
                 TransactionHash = aggregate.TransactionHash
             },
             BlockchainCashoutProcessorBoundedContext.Name);

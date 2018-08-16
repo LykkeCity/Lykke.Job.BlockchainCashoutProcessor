@@ -82,7 +82,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     AssetId = aggregate.AssetId,
                     ClientId = aggregate.ClientId,
                     ToAddress = aggregate.ToAddress,
-                    TransactionHash = ""
+                    OperationId = aggregate.OperationId,
+                    TransactionHash = "0x"
                 },
                 BlockchainCashoutProcessorBoundedContext.Name);
 
@@ -90,7 +91,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             {
                 AssetId = aggregate.AssetId,
                 Amount = aggregate.Amount,
-                ClientId = aggregate.RecipientClientId
+                ClientId = aggregate.RecipientClientId,
+                OperationId = aggregate.CashinOperationId,
+                TransactionHash = "0x"
             }
             , BlockchainCashoutProcessorBoundedContext.Name);
         }
