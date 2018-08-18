@@ -5,11 +5,11 @@ using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
-using Lykke.MatchingEngine.Connector.Abstractions.Models;
 using Lykke.MatchingEngine.Connector.Abstractions.Services;
 using Lykke.Service.BlockchainWallets.Client;
 using System;
 using System.Threading.Tasks;
+using Lykke.MatchingEngine.Connector.Models.Api;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
