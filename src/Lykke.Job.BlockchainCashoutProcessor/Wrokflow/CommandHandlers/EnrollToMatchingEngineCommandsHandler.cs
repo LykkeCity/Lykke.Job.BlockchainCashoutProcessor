@@ -65,29 +65,36 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 throw new InvalidOperationException("ME response is null, don't know what to do");
             }
 
-            if (cashInResult.Status == MeStatusCodes.Ok ||
-                cashInResult.Status == MeStatusCodes.Duplicate)
+            switch (cashInResult.Status)
             {
-                if (cashInResult.Status == MeStatusCodes.Duplicate)
-                {
-                    _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command.CashoutOperationId, "Deduplicated by the ME");
-                }
+                case MeStatusCodes.Ok:
+                case MeStatusCodes.Duplicate:
+                    if (cashInResult.Status == MeStatusCodes.Duplicate)
+                    {
+                        _log.WriteInfo(nameof(EnrollToMatchingEngineCommand), command.CashoutOperationId, "Deduplicated by the ME");
+                    }
 
-                publisher.PublishEvent(new CashinEnrolledToMatchingEngineEvent
-                {
-                    CashoutOperationId = command.CashoutOperationId
-                });
+                    publisher.PublishEvent(new CashinEnrolledToMatchingEngineEvent
+                    {
+                        CashoutOperationId = command.CashoutOperationId
+                    });
 
-                _chaosKitty.Meow(command.CashinOperationId);
+                    _chaosKitty.Meow(command.CashinOperationId);
 
-                await _deduplicationRepository.InsertOrReplaceAsync(command.CashinOperationId);
+                    await _deduplicationRepository.InsertOrReplaceAsync(command.CashinOperationId);
 
-                _chaosKitty.Meow(command.CashinOperationId);
+                    _chaosKitty.Meow(command.CashinOperationId);
 
-                return CommandHandlingResult.Ok();
+                    return CommandHandlingResult.Ok();
+
+                case MeStatusCodes.Runtime:
+                    // Retry forever with the default delay + log the error outside.
+                    throw new Exception($"Cashin into the ME is failed. ME status: {cashInResult.Status}, ME message: {cashInResult.Message}");
+
+                default:
+                    // Just abort cashout for further manual processing. ME call could not be retried anyway if response was recieved.
+                    return CommandHandlingResult.Ok();
             }
-
-            throw new InvalidOperationException($"Cashin into the ME is failed. ME status: {cashInResult.Status}, ME message: {cashInResult.Message}");
         }
     }
 }
