@@ -92,7 +92,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                     throw new Exception($"Cashin into the ME is failed. ME status: {cashInResult.Status}, ME message: {cashInResult.Message}");
 
                 default:
-                    // Just abort cashout for further manual processing. ME call could not be retried anyway if response was recieved.
+                    // Just abort cashout for further manual processing. ME call could not be retried anyway if responce was received.
                     _log.WriteWarning(nameof(EnrollToMatchingEngineCommand), command.CashoutOperationId, $"Unexpected response from ME. Status: {cashInResult.Status}, ME message: {cashInResult.Message}");
                     return CommandHandlingResult.Ok();
             }
