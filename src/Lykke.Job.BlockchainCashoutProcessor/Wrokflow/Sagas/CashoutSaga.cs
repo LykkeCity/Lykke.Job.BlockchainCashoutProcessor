@@ -1,9 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Mappers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -99,15 +101,29 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent evt, ICommandSender sender)
         {
             var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-
+      
             if (aggregate == null)
             {
                 // This is not a cashout operation
                 return;
             }
-
-            if (aggregate.OnOperationFailed(evt.Error))
+           
+            if (aggregate.OnOperationFailed(evt.Error)) 
             {
+                sender.SendCommand
+                (
+                    new NotifyCashoutFailedCommand
+                    {
+                        Amount = aggregate.Amount,
+                        AssetId = aggregate.AssetId,
+                        ClientId = aggregate.ClientId,
+                        OperationId = aggregate.OperationId,
+                        Error = evt.ErrorCode.MapToChashoutProcessResultMessage(),
+                        ErrorCode = evt.ErrorCode.MapToChashoutProcessResult().MapToChashoutProcessErrorCode()
+                    },
+                    BlockchainCashoutProcessorBoundedContext.Name
+                );
+
                 await _cashoutRepository.SaveAsync(aggregate);
 
                 _chaosKitty.Meow(evt.OperationId);
