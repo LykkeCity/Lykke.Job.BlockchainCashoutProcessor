@@ -108,7 +108,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
            
-            if (aggregate.OnOperationFailed(evt.Error)) 
+            if (aggregate.OnOperationFailed(evt.Error, evt.ErrorCode.MapToChashoutProcessResult())) 
             {
                 sender.SendCommand
                 (
@@ -118,8 +118,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                         AssetId = aggregate.AssetId,
                         ClientId = aggregate.ClientId,
                         OperationId = aggregate.OperationId,
-                        Error = evt.ErrorCode.MapToChashoutProcessResultMessage(),
-                        ErrorCode = evt.ErrorCode.MapToChashoutProcessResult().MapToChashoutProcessErrorCode()
+                        Error = aggregate.Error,
+                        ErrorCode = aggregate.Result.MapToChashoutProcessErrorCode()
                     },
                     BlockchainCashoutProcessorBoundedContext.Name
                 );

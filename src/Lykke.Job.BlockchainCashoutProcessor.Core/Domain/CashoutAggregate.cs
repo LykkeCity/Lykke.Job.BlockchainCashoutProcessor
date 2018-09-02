@@ -27,13 +27,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public string Error { get; private set; }
 
         private CashoutAggregate(
-            Guid operationId, 
-            Guid clientId, 
-            string blockchainType, 
-            string blockchainAssetId, 
-            string hotWalletAddress, 
-            string toAddress, 
-            decimal amount, 
+            Guid operationId,
+            Guid clientId,
+            string blockchainType,
+            string blockchainAssetId,
+            string hotWalletAddress,
+            string toAddress,
+            decimal amount,
             string assetId)
         {
             StartMoment = DateTime.UtcNow;
@@ -97,9 +97,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Guid clientId,
             string blockchainType,
             string blockchainAssetId,
-            string hotWalletAddress, 
-            string toAddress, 
-            decimal amount, 
+            string hotWalletAddress,
+            string toAddress,
+            decimal amount,
             string assetId)
         {
             return new CashoutAggregate(
@@ -107,9 +107,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 clientId,
                 blockchainType,
                 blockchainAssetId,
-                hotWalletAddress, 
-                toAddress, 
-                amount, 
+                hotWalletAddress,
+                toAddress,
+                amount,
                 assetId);
         }
 
@@ -171,7 +171,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             return true;
         }
 
-        public bool OnOperationFailed(string error)
+        public bool OnOperationFailed(string error, CashoutResult cashoutResult)
         {
             if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
@@ -182,7 +182,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
             Error = error;
 
-            Result = CashoutResult.Failure;
+            Result = cashoutResult;
 
             return true;
         }
