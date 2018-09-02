@@ -21,20 +21,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Mappers
         }
 
 
-        public static string MapToChashoutProcessResultMessage(this OperationExecutionErrorCode source)
-        {
-            switch (source)
-            {
-                case OperationExecutionErrorCode.Unknown:
-                    return "Unknown error";
-                case OperationExecutionErrorCode.AmountTooSmall:
-                    return "Amount is to small";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(source), source, null);
-            }
-        }
-
-
         public static ChashoutErrorCode MapToChashoutProcessErrorCode(this CashoutResult source)
         {
             switch (source)
