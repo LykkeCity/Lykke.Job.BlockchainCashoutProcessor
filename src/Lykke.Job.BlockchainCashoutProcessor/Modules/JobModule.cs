@@ -9,7 +9,6 @@ using Lykke.Job.BlockchainCashoutProcessor.Settings;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.Assets;
 using Lykke.MatchingEngine.Connector.Services;
 using Lykke.Service.Assets.Client;
-using Lykke.Service.OperationsRepository.Client;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Modules
@@ -18,7 +17,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
     {
         private readonly AssetsSettings _assetsSettings;
         private readonly ChaosSettings _chaosSettings;
-        private readonly Settings.OperationsRepositoryServiceClientSettings _operationsRepositoryServiceSettings;
 
         private readonly ILog _log;
         private readonly MatchingEngineSettings _meSettings;
@@ -29,13 +27,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         public JobModule(
             AssetsSettings assetsSettings,
             ChaosSettings chaosSettings,
-            Settings.OperationsRepositoryServiceClientSettings operationsRepositoryServiceSettings,
             MatchingEngineSettings matchingEngineSettings,
             ILog log)
         {
             _assetsSettings = assetsSettings;
             _chaosSettings = chaosSettings;
-            _operationsRepositoryServiceSettings = operationsRepositoryServiceSettings;
             _log = log;
             _meSettings = matchingEngineSettings;
 
@@ -68,12 +64,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 },
                 _log
             );
-
-            builder.RegisterOperationsRepositoryClients(new Service.OperationsRepository.Client.OperationsRepositoryServiceClientSettings
-            {
-                ServiceUrl = _operationsRepositoryServiceSettings.ServiceUrl,
-                RequestTimeout = _operationsRepositoryServiceSettings.RequestTimeout
-            }, _log);
 
             RegisterMatchingEngine(builder);
 

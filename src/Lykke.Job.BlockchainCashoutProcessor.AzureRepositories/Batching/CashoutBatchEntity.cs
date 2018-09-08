@@ -34,6 +34,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 
         public string HotWalletAddress { get; set; }
 
+        public string TransactionHash { get; set; }
+
+        public OperationOutputEntity[] TransactionOutputs { get; set; }
+
+        public decimal TransactionFee { get; set; }
+
+        public long TransactionBlock { get; set; }
+
         #endregion
         
 
@@ -75,7 +83,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
                 Cashouts = aggregate.Cashouts
                     .Select(BatchedCashoutEntity.FromDomain)
                     .ToArray(),
-                HotWalletAddress = aggregate.HotWalletAddress
+                HotWalletAddress = aggregate.HotWalletAddress,
+                TransactionHash = aggregate.TransactionHash,
+                TransactionOutputs = aggregate.TransactionOutputs
+                    .Select(OperationOutputEntity.FromDomain)
+                    .ToArray(),
+                TransactionFee = aggregate.TransactionFee,
+                TransactionBlock = aggregate.TransactionBlock
             };
         }
 
@@ -94,7 +108,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
                 Cashouts
                     .Select(x => x.ToDomain())
                     .ToArray(),
-                HotWalletAddress);
+                HotWalletAddress,
+                TransactionHash,
+                TransactionOutputs
+                    .Select(x => x.ToDomain())
+                    .ToArray(),
+                TransactionFee,
+                TransactionBlock);
         }
 
         #endregion

@@ -22,9 +22,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings
         public AssetsSettings Assets { get; set; }
 
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]
-        public OperationsRepositoryServiceClientSettings OperationsRepositoryServiceClient { get; set; }
-
-        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
         public BlockchainWalletsServiceClientSettings BlockchainWalletsServiceClient { get; set; }
 
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]

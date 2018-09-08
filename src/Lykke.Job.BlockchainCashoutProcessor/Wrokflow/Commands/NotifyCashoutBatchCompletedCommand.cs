@@ -1,5 +1,5 @@
 ﻿using System;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainOperationsExecutor.Contract;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
@@ -13,6 +13,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
 
         public string TransactionHash { get; set; }
 
-        public BatchedCashout[] Cashouts { get; set; }
+        public OperationOutput[] TransactionOutput { get; set; }
     }
 }

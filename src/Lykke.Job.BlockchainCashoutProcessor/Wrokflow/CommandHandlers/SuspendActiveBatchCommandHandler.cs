@@ -43,7 +43,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 {
                     BatchId = activeBatch.BatchId,
                     Cashouts = activeBatch.Cashouts
-                        .Select(BatchedCashoutMapper.FromDomain)
+                        .Select(BatchedCashoutMappingExtensions.FromDomain)
                         .ToArray()
                 });
             }

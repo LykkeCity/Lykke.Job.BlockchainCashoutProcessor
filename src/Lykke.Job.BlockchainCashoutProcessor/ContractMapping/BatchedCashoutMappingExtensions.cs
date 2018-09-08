@@ -3,9 +3,9 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.ContractMapping
 {
-    public static class BatchedCashoutMapper
+    public static class BatchedCashoutMappingExtensions
     {
-        public static BatchedCashout FromDomain(BatchedCashoutValueType domain)
+        public static BatchedCashout FromDomain(this BatchedCashoutValueType domain)
         {
             return new BatchedCashout
             {
@@ -15,7 +15,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.ContractMapping
             };
         }
 
-        public static BatchedCashoutValueType ToDmoain(BatchedCashout contract)
+        public static BatchedCashoutValueType ToDmoain(this BatchedCashout contract)
         {
             return new BatchedCashoutValueType(contract.OperationId, contract.DestinationAddress, contract.Amount);
         }

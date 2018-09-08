@@ -7,7 +7,6 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
@@ -85,9 +84,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<StartBatchExecutionCommandHandler>();
             builder.RegisterType<AddOperationToBatchCommandHandler>();
 
-            // Projections
-            builder.RegisterType<ClientOperationsProjection>();
-
             builder.Register(ctx => CreateEngine(ctx, messagingEngine))
                 .As<ICqrsEngine>()
                 .SingleInstance()
@@ -121,7 +117,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .On(defaultRoute)
                     .WithCommandsHandler<NotifyOpetationFinishedCommandsHandler>()
                     .PublishingEvents(typeof(CashoutCompletedEvent),
-                                      typeof(CashinCompletedEvent))
+                                      typeof(CrossClientCashinCompletedEvent))
                     .With(eventsRoute)
 
                     .ListeningCommands(typeof(NotifyCashoutFailedCommand))
@@ -150,16 +146,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .With(defaultPipeline)
 
-                    .ListeningEvents(typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent))
-                    .From(BlockchainOperationsExecutorBoundedContext.Name)
-                    .On("client-operations")
-                    .WithProjection(typeof(ClientOperationsProjection), BlockchainOperationsExecutorBoundedContext.Name)
-
-                    .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
-                    .From(Self)
-                    .On("client-operations")
-                    .WithProjection(typeof(ClientOperationsProjection), Self)
-
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .From(Self)
                     .On(eventsRoute)
@@ -183,8 +169,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .WithCommandsHandler<DeleteActiveBatchCommandHandler>()
 
                     .ProcessingOptions(defaultRoute).MultiThreaded(4).QueueCapacity(1024)
-                    .ProcessingOptions(eventsRoute).MultiThreaded(4).QueueCapacity(1024)
-                    .ProcessingOptions("client-operations").MultiThreaded(4).QueueCapacity(1024),
+                    .ProcessingOptions(eventsRoute).MultiThreaded(4).QueueCapacity(1024),
                 
                 Register.Saga<CashoutSaga>($"{Self}.saga")
                     .ListeningEvents(typeof(CashoutStartedEvent))

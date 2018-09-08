@@ -62,7 +62,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             _chaosKitty.Meow(evt.BatchId);
 
             var cashouts = evt.Cashouts
-                .Select(BatchedCashoutMapper.ToDmoain)
+                .Select(BatchedCashoutMappingExtensions.ToDmoain)
                 .ToArray();
 
             if (aggregate.OnBatchSuspended(cashouts))
@@ -74,8 +74,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                         AssetId = aggregate.BlockchainAssetId,
                         FromAddress = aggregate.HotWalletAddress,
                         IncludeFee = aggregate.IncludeFee,
-                        ToEndpoints = aggregate.Cashouts
-                            .Select(x => new BlockchainOperationsExecutor.Contract.Commands.OperationEndpoint
+                        Outputs = aggregate.Cashouts
+                            .Select(x => new OperationOutput
                             {
                                 Address = x.DestinationAddress,
                                 Amount = x.Amount
@@ -100,7 +100,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
 
         [UsedImplicitly]
-        private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent evt, ICommandSender sender)
+        private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OneToManyOperationExecutionCompletedEvent evt, ICommandSender sender)
         {
             var aggregate = await _cashoutBatchRepository.TryGetAsync(evt.OperationId);
 
@@ -110,7 +110,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
 
-            if (aggregate.OnBatchCompeted(evt.TransactionHash, evt.TransactionAmount, evt.Fee, evt.Block))
+            if (aggregate.OnBatchCompeted(
+                evt.TransactionHash, 
+                evt.TransactionOutputs
+                    .Select(x => x.ToDomain())
+                    .ToArray(), 
+                evt.Fee, 
+                evt.Block))
             {
                 await _cashoutBatchRepository.SaveAsync(aggregate);
 
@@ -120,8 +126,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     {
                         BatchId = aggregate.BatchId,
                         BlockchainAssetId = aggregate.BlockchainAssetId,
-                        Cashouts = aggregate.Cashouts
-                            .Select(x => BatchedCashoutMapper.FromDomain(x))
+                        TransactionOutput = aggregate.TransactionOutputs
+                            .Select(x => x.ToContract())
                             .ToArray(),
                         TransactionHash = aggregate.TransactionHash
                     },

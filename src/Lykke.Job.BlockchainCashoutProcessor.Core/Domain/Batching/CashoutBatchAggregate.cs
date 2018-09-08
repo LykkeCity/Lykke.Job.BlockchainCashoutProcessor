@@ -26,6 +26,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 
         public IReadOnlyCollection<BatchedCashoutValueType> Cashouts { get; private set; }
 
+        public string TransactionHash { get; private set; }
+
+        public IReadOnlyCollection<OperationOutputValueType> TransactionOutputs { get; private set; }
+
+        public decimal TransactionFee { get; private set; }
+
+        public long TransactionBlock { get; private set; }
+
+        
         public static CashoutBatchAggregate Restore(string version,
             CashoutBatchState state,
             DateTime startedAt,
@@ -36,7 +45,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             string blockchainAssetId,
             bool includeFee,
             IReadOnlyCollection<BatchedCashoutValueType> cashouts,
-            string hotWalletAddress)
+            string hotWalletAddress,
+            string transactionHash,
+            IReadOnlyCollection<OperationOutputValueType> transactionOutputs,
+            decimal transactionFee,
+            long transactionBlock)
         {
             return new CashoutBatchAggregate(
                 state: state,
@@ -49,7 +62,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 includeFee: includeFee,
                 cashouts: cashouts,
                 version: version,
-                hotWalletAddress: hotWalletAddress);
+                hotWalletAddress: hotWalletAddress)
+            {
+                TransactionHash = transactionHash,
+                TransactionOutputs = transactionOutputs,
+                TransactionFee = transactionFee,
+                TransactionBlock = transactionBlock
+            };
         }
 
         public static CashoutBatchAggregate CreateNew(Guid batchId,
@@ -106,28 +125,41 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
         {
             var result = State == CashoutBatchState.Started;
 
-            SuspendedAt = DateTime.UtcNow;
             State = CashoutBatchState.Suspended;
+
+            SuspendedAt = DateTime.UtcNow;
+
             Cashouts = cashouts;
 
             return result;
         }
 
-        public bool OnBatchCompeted()
+        public bool OnBatchCompeted(
+            string transactionHash, 
+            IReadOnlyCollection<OperationOutputValueType> transactionOutputs, 
+            decimal transactionFee,
+            long transactionBlock)
         {
             var result = State == CashoutBatchState.Suspended;
 
             State = CashoutBatchState.Finished;
+
             FinishedAt = DateTime.UtcNow;
 
+            TransactionHash = transactionHash;
+            TransactionOutputs = transactionOutputs;
+            TransactionFee = transactionFee;
+            TransactionBlock = transactionBlock;
+
             return result;
-        }
+        }   
 
         public bool OnBatchFailed()
         {
             var result = State == CashoutBatchState.Suspended;
 
             State = CashoutBatchState.Finished;
+
             FinishedAt = DateTime.UtcNow;
 
             return result;
