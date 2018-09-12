@@ -22,7 +22,7 @@
     <!-- #if azurequeuesub -->
     <!-- #endif -->
     <PackageReference Include="Lykke.Logs" Version="5.2.0" />
-    <PackageReference Include="Lykke.Messaging" Version="6.1.0" />
+    <PackageReference Include="Lykke.Messaging" Version="6.2.0" />
     <PackageReference Include="Lykke.MatchingEngineConnector" Version="7.4.0" />
     <PackageReference Include="Lykke.Messaging.RabbitMq" Version="2.1.0" />
     <!-- #if rabbitpub -->
