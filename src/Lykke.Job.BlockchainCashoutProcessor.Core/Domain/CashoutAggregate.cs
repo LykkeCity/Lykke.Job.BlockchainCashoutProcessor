@@ -8,6 +8,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public CashoutState State { get; private set; }
         public CashoutResult Result { get; private set; }
+        public CashoutErrorCode? ErrorCode { get; private set; }
 
         public DateTime StartMoment { get; }
         public DateTime? OperationFinishMoment { get; private set; }
@@ -27,13 +28,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public string Error { get; private set; }
 
         private CashoutAggregate(
-            Guid operationId, 
-            Guid clientId, 
-            string blockchainType, 
-            string blockchainAssetId, 
-            string hotWalletAddress, 
-            string toAddress, 
-            decimal amount, 
+            Guid operationId,
+            Guid clientId,
+            string blockchainType,
+            string blockchainAssetId,
+            string hotWalletAddress,
+            string toAddress,
+            decimal amount,
             string assetId)
         {
             StartMoment = DateTime.UtcNow;
@@ -97,9 +98,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Guid clientId,
             string blockchainType,
             string blockchainAssetId,
-            string hotWalletAddress, 
-            string toAddress, 
-            decimal amount, 
+            string hotWalletAddress,
+            string toAddress,
+            decimal amount,
             string assetId)
         {
             return new CashoutAggregate(
@@ -107,9 +108,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 clientId,
                 blockchainType,
                 blockchainAssetId,
-                hotWalletAddress, 
-                toAddress, 
-                amount, 
+                hotWalletAddress,
+                toAddress,
+                amount,
                 assetId);
         }
 
@@ -171,7 +172,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             return true;
         }
 
-        public bool OnOperationFailed(string error)
+        public bool OnOperationFailed(string error, CashoutErrorCode? errorCode)
         {
             if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
@@ -183,6 +184,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             Error = error;
 
             Result = CashoutResult.Failure;
+
+            ErrorCode = errorCode;
 
             return true;
         }

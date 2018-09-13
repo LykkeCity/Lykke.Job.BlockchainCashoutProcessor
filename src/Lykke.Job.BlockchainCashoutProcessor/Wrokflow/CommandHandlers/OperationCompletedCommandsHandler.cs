@@ -30,7 +30,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         {
             publisher.PublishEvent(new CashinCompletedEvent()
             {
-                ClientId = command.ClientId ,
+                ClientId = command.ClientId,
                 AssetId =  command.AssetId,
                 Amount = command.Amount,
                 OperationId = command.OperationId,

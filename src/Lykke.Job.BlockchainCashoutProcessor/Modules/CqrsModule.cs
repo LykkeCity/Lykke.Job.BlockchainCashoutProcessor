@@ -5,6 +5,7 @@ using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
@@ -66,6 +67,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
             builder.RegisterType<OperationCompletedCommandsHandler>();
+            builder.RegisterType<NotifyCashoutFailedCommandsHandler>();
 
             // Projections
             builder.RegisterType<ClientOperationsProjection>();
@@ -102,9 +104,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(NotifyCashoutCompletedCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<OperationCompletedCommandsHandler>()
-                    .PublishingEvents(typeof(CashoutCompletedEvent),
-                                      typeof(CashinCompletedEvent))
+                    .PublishingEvents(typeof(BlockchainCashoutProcessor.Wrokflow.Events.CashoutCompletedEvent),
+                                      typeof(BlockchainCashoutProcessor.Wrokflow.Events.CashinCompletedEvent))
                     .With(eventsRoute)
+
+                    .ListeningCommands(typeof(NotifyCashoutFailedCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<NotifyCashoutFailedCommandsHandler>()
+                    .PublishingEvents(typeof(CashoutFailedEvent))
+                    .With(eventsRoute)
+
 
                     .ListeningCommands(typeof(StartCashoutCommand))
                     .On(defaultRoute)
@@ -155,7 +164,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent))
                     .From(BlockchainOperationsExecutorBoundedContext.Name)
                     .On(defaultRoute)
-                    .PublishingCommands(typeof(NotifyCashoutCompletedCommand))
+                    .PublishingCommands(typeof(NotifyCashoutCompletedCommand),
+                        typeof(NotifyCashoutFailedCommand))
                     .To(Self)
                     .With(defaultPipeline),
 

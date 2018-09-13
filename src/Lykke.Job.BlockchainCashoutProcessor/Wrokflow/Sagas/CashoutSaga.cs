@@ -1,9 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Mappers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -106,8 +108,25 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
 
-            if (aggregate.OnOperationFailed(evt.Error))
+            if (aggregate.OnOperationFailed(evt.Error, evt.ErrorCode.MapToCashoutErrorCode()))
             {
+                if (aggregate.ErrorCode != null)
+                {
+                    sender.SendCommand
+                          (
+                              new NotifyCashoutFailedCommand
+                              {
+                                  Amount = aggregate.Amount,
+                                  AssetId = aggregate.AssetId,
+                                  ClientId = aggregate.ClientId,
+                                  OperationId = aggregate.OperationId,
+                                  Error = aggregate.Error,
+                                  ErrorCode = aggregate.ErrorCode.Value.MapToCashoutProcessErrorCode()
+                              },
+                              BlockchainCashoutProcessorBoundedContext.Name
+                          );
+                }
+
                 await _cashoutRepository.SaveAsync(aggregate);
 
                 _chaosKitty.Meow(evt.OperationId);
