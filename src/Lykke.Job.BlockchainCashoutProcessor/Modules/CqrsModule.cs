@@ -17,8 +17,6 @@ using Lykke.Messaging;
 using Lykke.Messaging.Contract;
 using Lykke.Messaging.RabbitMq;
 using Lykke.Messaging.Serialization;
-using CashinCompletedEvent = Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CashinCompletedEvent;
-using CashoutCompletedEvent = Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CashoutCompletedEvent;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 {
@@ -106,8 +104,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         typeof(NotifyCashoutCompletedCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<OperationCompletedCommandsHandler>()
-                    .PublishingEvents(typeof(CashoutCompletedEvent),
-                                      typeof(CashinCompletedEvent))
+                    .PublishingEvents(typeof(BlockchainCashoutProcessor.Wrokflow.Events.CashoutCompletedEvent),
+                                      typeof(BlockchainCashoutProcessor.Wrokflow.Events.CashinCompletedEvent))
                     .With(eventsRoute)
 
                     .ListeningCommands(typeof(NotifyCashoutFailedCommand))

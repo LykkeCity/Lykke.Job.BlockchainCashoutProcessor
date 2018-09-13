@@ -1,6 +1,6 @@
 ﻿namespace Lykke.Job.BlockchainCashoutProcessor.Contract
 {
-    public enum ChashoutErrorCode
+    public enum CashoutErrorCode
     {
         Unknown,
         AmountTooSmall

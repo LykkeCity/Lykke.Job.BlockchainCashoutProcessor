@@ -7,28 +7,28 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Mappers
 {
     public static class MappingExtensions
     {
-        public static CashoutResult MapToChashoutProcessResult(this OperationExecutionErrorCode source)
+        public static CashoutFailCode MapToCashoutProcessResult(this OperationExecutionErrorCode source)
         {
             switch (source)
             {
                 case OperationExecutionErrorCode.Unknown:
-                    return CashoutResult.Unknown;
+                    return CashoutFailCode.Unknown;
                 case OperationExecutionErrorCode.AmountTooSmall:
-                    return CashoutResult.AmountTooSmall;
+                    return CashoutFailCode.AmountTooSmall;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
             }
         }
 
 
-        public static ChashoutErrorCode MapToChashoutProcessErrorCode(this CashoutResult source)
+        public static CashoutErrorCode MapToCashoutProcessErrorCode(this CashoutFailCode source)
         {
             switch (source)
             {
-                case CashoutResult.Unknown:
-                    return ChashoutErrorCode.Unknown;
-                case CashoutResult.AmountTooSmall:
-                    return ChashoutErrorCode.AmountTooSmall;
+                case CashoutFailCode.Unknown:
+                    return CashoutErrorCode.Unknown;
+                case CashoutFailCode.AmountTooSmall:
+                    return CashoutErrorCode.AmountTooSmall;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
             }

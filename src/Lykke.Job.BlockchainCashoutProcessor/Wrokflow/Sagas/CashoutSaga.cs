@@ -101,28 +101,33 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent evt, ICommandSender sender)
         {
             var aggregate = await _cashoutRepository.TryGetAsync(evt.OperationId);
-      
+
             if (aggregate == null)
             {
                 // This is not a cashout operation
                 return;
             }
-           
-            if (aggregate.OnOperationFailed(evt.Error, evt.ErrorCode.MapToChashoutProcessResult())) 
+
+            if (aggregate.OnOperationFailed(evt.Error))
             {
-                sender.SendCommand
-                (
-                    new NotifyCashoutFailedCommand
-                    {
-                        Amount = aggregate.Amount,
-                        AssetId = aggregate.AssetId,
-                        ClientId = aggregate.ClientId,
-                        OperationId = aggregate.OperationId,
-                        Error = aggregate.Error,
-                        ErrorCode = aggregate.Result.MapToChashoutProcessErrorCode()
-                    },
-                    BlockchainCashoutProcessorBoundedContext.Name
-                );
+                aggregate.OnOperationFailedCodeMap(evt.ErrorCode.MapToCashoutProcessResult());
+
+                if (aggregate.ErrorCode != null)
+                {
+                    sender.SendCommand
+                          (
+                              new NotifyCashoutFailedCommand
+                              {
+                                  Amount = aggregate.Amount,
+                                  AssetId = aggregate.AssetId,
+                                  ClientId = aggregate.ClientId,
+                                  OperationId = aggregate.OperationId,
+                                  Error = aggregate.Error,
+                                  ErrorCode = aggregate.ErrorCode.Value.MapToCashoutProcessErrorCode()
+                              },
+                              BlockchainCashoutProcessorBoundedContext.Name
+                          );
+                }
 
                 await _cashoutRepository.SaveAsync(aggregate);
 
