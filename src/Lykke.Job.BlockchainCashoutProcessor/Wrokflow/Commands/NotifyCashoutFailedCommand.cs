@@ -12,6 +12,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
         public string AssetId { get; set; }
         public Guid OperationId { get; set; }
         public string Error { get; set; }
-        public CashoutErrorCode ErrorCode { get; set; }
+        public CashoutErrorCode ErrorCode { get; set; } 
+        public DateTime StartMoment { get; set; }
+        public DateTime FinishMoment { get; set; }
     }
 }

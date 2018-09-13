@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
@@ -69,7 +70,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         {
             var aggregate = await _cashoutRepository.GetAsync(evt.CashoutOperationId);
 
-            if (aggregate.OnEnrolledToMatchingEngine())
+            var matchingEngineEnrollementMoment = DateTime.UtcNow;
+
+            if (aggregate.OnEnrolledToMatchingEngine(matchingEngineEnrollementMoment))
             {
                 _chaosKitty.Meow(evt.CashoutOperationId);
 
@@ -83,8 +86,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     ClientId = aggregate.ClientId,
                     ToAddress = aggregate.ToAddress,
                     OperationId = aggregate.OperationId,
-                    TransactionHash = "0x"
-                },
+                    TransactionHash = "0x",
+                    StartMoment = aggregate.StartMoment,
+                    FinishMoment = matchingEngineEnrollementMoment
+            },
                 BlockchainCashoutProcessorBoundedContext.Name);
 
             sender.SendCommand(new NotifyCashinCompletedCommand()
