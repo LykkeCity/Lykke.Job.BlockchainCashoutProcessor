@@ -108,10 +108,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
 
-            if (aggregate.OnOperationFailed(evt.Error))
+            if (aggregate.OnOperationFailed(evt.Error, evt.ErrorCode.MapToCashoutErrorCode()))
             {
-                aggregate.OnOperationFailedCodeMap(evt.ErrorCode.MapToCashoutProcessResult());
-
                 if (aggregate.ErrorCode != null)
                 {
                     sender.SendCommand

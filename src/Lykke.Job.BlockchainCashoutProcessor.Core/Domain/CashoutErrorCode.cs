@@ -1,6 +1,6 @@
 ﻿namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 {
-    public enum CashoutFailCode
+    public enum CashoutErrorCode
     {
         Unknown,
         AmountTooSmall

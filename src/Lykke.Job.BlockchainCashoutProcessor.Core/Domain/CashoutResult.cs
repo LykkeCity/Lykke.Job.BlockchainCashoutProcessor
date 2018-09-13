@@ -4,7 +4,6 @@
     {
         Unknown,
         Success,
-        Failure,
-        AmountTooSmall
+        Failure
     }
 }

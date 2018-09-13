@@ -8,7 +8,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public CashoutState State { get; private set; }
         public CashoutResult Result { get; private set; }
-        public CashoutFailCode? ErrorCode { get; private set; }
+        public CashoutErrorCode? ErrorCode { get; private set; }
 
         public DateTime StartMoment { get; }
         public DateTime? OperationFinishMoment { get; private set; }
@@ -172,7 +172,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             return true;
         }
 
-        public bool OnOperationFailed(string error)
+        public bool OnOperationFailed(string error, CashoutErrorCode? errorCode)
         {
             if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
@@ -185,12 +185,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
             Result = CashoutResult.Failure;
 
-            return true;
-        }
-
-        public void OnOperationFailedCodeMap(CashoutFailCode errorCode)
-        {
             ErrorCode = errorCode;
+
+            return true;
         }
 
         private bool SwitchState(CashoutState expectedState, CashoutState nextState)
