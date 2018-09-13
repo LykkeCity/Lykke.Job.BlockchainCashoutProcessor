@@ -1,34 +1,32 @@
 ﻿using System;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
-using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Mappers
 {
     public static class MappingExtensions
     {
-        public static CashoutResult MapToChashoutProcessResult(this OperationExecutionErrorCode source)
+        public static Core.Domain.CashoutErrorCode MapToCashoutErrorCode(this OperationExecutionErrorCode source)
         {
             switch (source)
             {
                 case OperationExecutionErrorCode.Unknown:
-                    return CashoutResult.Unknown;
+                    return Core.Domain.CashoutErrorCode.Unknown;
                 case OperationExecutionErrorCode.AmountTooSmall:
-                    return CashoutResult.AmountTooSmall;
+                    return Core.Domain.CashoutErrorCode.AmountTooSmall;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
             }
         }
+       
 
-
-        public static ChashoutErrorCode MapToChashoutProcessErrorCode(this CashoutResult source)
+        public static Contract.CashoutErrorCode MapToCashoutProcessErrorCode(this Core.Domain.CashoutErrorCode source)
         {
             switch (source)
             {
-                case CashoutResult.Unknown:
-                    return ChashoutErrorCode.Unknown;
-                case CashoutResult.AmountTooSmall:
-                    return ChashoutErrorCode.AmountTooSmall;
+                case Core.Domain.CashoutErrorCode.Unknown:
+                    return Contract.CashoutErrorCode.Unknown;
+                case Core.Domain.CashoutErrorCode.AmountTooSmall:
+                    return Contract.CashoutErrorCode.AmountTooSmall;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
             }

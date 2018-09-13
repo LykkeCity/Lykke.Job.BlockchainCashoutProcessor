@@ -37,6 +37,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
         /// <summary>
         /// Error code
         /// </summary>
-        public ChashoutErrorCode ErrorCode { get; set; }
+        public CashoutErrorCode ErrorCode { get; set; }
     }
 }
