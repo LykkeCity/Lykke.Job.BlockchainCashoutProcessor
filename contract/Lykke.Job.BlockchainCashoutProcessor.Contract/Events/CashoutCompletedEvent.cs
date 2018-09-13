@@ -17,5 +17,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
         public Guid OperationId { get; set; }
 
         public string TransactionHash { get; set; }
+
+        /// <summary>
+        /// moment, when cashout was started
+        /// </summary>
+        public DateTime StartMoment { get; set; }
+
+        /// <summary>
+        /// moment, when cashout was finished
+        /// </summary>
+        public DateTime FinishMoment { get; set; }
     }
 }

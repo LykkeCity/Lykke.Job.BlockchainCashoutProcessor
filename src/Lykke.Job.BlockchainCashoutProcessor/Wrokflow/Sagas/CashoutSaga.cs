@@ -78,7 +78,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
 
-            if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee))
+            var operationFinishMoment = DateTime.UtcNow;
+
+            if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee, operationFinishMoment))
             {
                 await _cashoutRepository.SaveAsync(aggregate);
 
@@ -92,7 +94,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 ClientId = aggregate.ClientId,
                 ToAddress = aggregate.ToAddress,
                 OperationId = aggregate.OperationId,
-                TransactionHash = aggregate.TransactionHash
+                TransactionHash = aggregate.TransactionHash,
+                StartMoment = aggregate.StartMoment,
+                FinishMoment = operationFinishMoment
             },
             BlockchainCashoutProcessorBoundedContext.Name);
         }
@@ -108,23 +112,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 return;
             }
 
-            if (aggregate.OnOperationFailed(evt.Error, evt.ErrorCode.MapToCashoutErrorCode()))
+            var operationFinishMoment = DateTime.UtcNow;
+            if (aggregate.OnOperationFailed(evt.Error, evt.ErrorCode.MapToCashoutErrorCode(), operationFinishMoment))
             {
                 if (aggregate.ErrorCode != null)
                 {
-                    sender.SendCommand
-                          (
-                              new NotifyCashoutFailedCommand
-                              {
-                                  Amount = aggregate.Amount,
-                                  AssetId = aggregate.AssetId,
-                                  ClientId = aggregate.ClientId,
-                                  OperationId = aggregate.OperationId,
-                                  Error = aggregate.Error,
-                                  ErrorCode = aggregate.ErrorCode.Value.MapToCashoutProcessErrorCode()
-                              },
-                              BlockchainCashoutProcessorBoundedContext.Name
-                          );
+                    sender.SendCommand(new NotifyCashoutFailedCommand
+                        {
+                            Amount = aggregate.Amount,
+                            AssetId = aggregate.AssetId,
+                            ClientId = aggregate.ClientId,
+                            OperationId = aggregate.OperationId,
+                            Error = aggregate.Error,
+                            ErrorCode = aggregate.ErrorCode.Value.MapToCashoutProcessErrorCode(),
+                            StartMoment = aggregate.StartMoment,
+                            FinishMoment = operationFinishMoment
+                        },
+                        BlockchainCashoutProcessorBoundedContext.Name
+                    );
                 }
 
                 await _cashoutRepository.SaveAsync(aggregate);

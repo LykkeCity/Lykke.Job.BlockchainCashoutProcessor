@@ -38,5 +38,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
         /// Error code
         /// </summary>
         public CashoutErrorCode ErrorCode { get; set; }
+
+        /// <summary>
+        /// moment, when cashout was started
+        /// </summary>
+        public DateTime StartMoment { get; set; }
+
+        /// <summary>
+        /// moment, when cashout was finished
+        /// </summary>
+        public DateTime FinishMoment { get; set; }
     }
 }

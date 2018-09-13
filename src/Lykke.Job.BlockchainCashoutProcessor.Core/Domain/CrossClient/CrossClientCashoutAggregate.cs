@@ -145,14 +145,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
                 cashinOperationId);
         }
 
-        public bool OnEnrolledToMatchingEngine()
+        public bool OnEnrolledToMatchingEngine(DateTime matchingEngineEnrollementMoment)
         {
             if (!SwitchState(CrossClientCashoutState.Started, CrossClientCashoutState.EnrolledToMatchingEngine))
             {
                 return false;
             }
 
-            MatchingEngineEnrollementMoment = DateTime.UtcNow;
+            MatchingEngineEnrollementMoment = matchingEngineEnrollementMoment;
 
             return true;
         }

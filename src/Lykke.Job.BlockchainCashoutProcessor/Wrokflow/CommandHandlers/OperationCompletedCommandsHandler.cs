@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 {
@@ -19,7 +19,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 ClientId = command.ClientId,
                 Amount = command.Amount,
                 OperationId = command.OperationId,
-                TransactionHash = command.TransactionHash
+                TransactionHash = command.TransactionHash,
+                StartMoment = command.StartMoment,
+                FinishMoment = command.FinishMoment
             });
 
             return Task.FromResult(CommandHandlingResult.Ok());
