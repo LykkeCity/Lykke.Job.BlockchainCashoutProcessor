@@ -88,8 +88,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             sender.SendCommand(new NotifyCashoutCompletedCommand()
             {
                 Amount = aggregate.Amount,
-                MeOperationAmount = aggregate.TransactionAmount.Value,
-                Fee = aggregate.Fee.Value,
+                TransactionAmount = aggregate.TransactionAmount ?? 0M,
+                Fee = aggregate.Fee ?? 0M,
                 AssetId = aggregate.AssetId,
                 ClientId = aggregate.ClientId,
                 ToAddress = aggregate.ToAddress,

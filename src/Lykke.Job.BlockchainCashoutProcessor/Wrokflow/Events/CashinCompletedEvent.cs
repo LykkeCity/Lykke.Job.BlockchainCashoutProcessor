@@ -10,7 +10,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
 
         public decimal Amount { get; set; }
 
-        public decimal MeAmount { get; set; }
+        public decimal TransactionAmount { get; set; }
 
         public decimal Fee { get; set; }
 
