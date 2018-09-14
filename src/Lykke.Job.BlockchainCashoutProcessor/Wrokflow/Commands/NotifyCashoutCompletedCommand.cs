@@ -1,4 +1,5 @@
 ﻿using System;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
@@ -12,7 +13,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
 
         public decimal Amount { get; set; }
 
+        public decimal MeOperationAmount { get; set; }
+
+        public decimal Fee { get; set; }
+
         public Guid ClientId { get; set; }
+
+        public CashoutOperationType OperationType { get; set; }
 
         public Guid OperationId { get; set; }
 

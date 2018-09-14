@@ -78,10 +78,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             sender.SendCommand(new NotifyCashoutCompletedCommand()
                 {
-                    Amount = aggregate.Amount,
+                    Amount = 0M,
+                    MeOperationAmount = aggregate.Amount,
+                    Fee = 0M,
                     AssetId = aggregate.AssetId,
                     ClientId = aggregate.ClientId,
                     ToAddress = aggregate.ToAddress,
+                    OperationType = CashoutOperationType.OffBlockchain,
                     OperationId = aggregate.OperationId,
                     TransactionHash = "0x"
                 },
@@ -90,8 +93,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             sender.SendCommand(new NotifyCashinCompletedCommand()
             {
                 AssetId = aggregate.AssetId,
-                Amount = aggregate.Amount,
+                Amount = 0M,
+                MeOperationAmount = aggregate.Amount,
+                Fee = 0M,
                 ClientId = aggregate.RecipientClientId,
+                OperationType = CashinOperationType.OffBlockchain,
                 OperationId = aggregate.CashinOperationId,
                 TransactionHash = "0x"
             }

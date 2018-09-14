@@ -18,6 +18,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 AssetId = command.AssetId,
                 ClientId = command.ClientId,
                 Amount = command.Amount,
+                MeAmount = command.MeOperationAmount,
+                Fee = command.Fee,
+                OperationType = command.OperationType,
                 OperationId = command.OperationId,
                 TransactionHash = command.TransactionHash
             });
@@ -33,6 +36,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 ClientId = command.ClientId,
                 AssetId =  command.AssetId,
                 Amount = command.Amount,
+                MeAmount = command.MeOperationAmount,
+                Fee = command.Fee,
+                OperationType = command.OperationType,
                 OperationId = command.OperationId,
                 TransactionHash = command.TransactionHash
             });
