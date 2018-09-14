@@ -12,7 +12,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
 
         public decimal Amount { get; set; }
 
+        public decimal TransactionAmount { get; set; }
+
+        public decimal Fee { get; set; }
+
         public Guid ClientId { get; set; }
+
+        public CashoutOperationType OperationType { get; set; }
 
         public Guid OperationId { get; set; }
 
