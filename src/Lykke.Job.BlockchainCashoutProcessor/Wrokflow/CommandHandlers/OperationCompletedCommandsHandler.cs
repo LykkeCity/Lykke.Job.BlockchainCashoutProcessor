@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Cqrs;
-using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
@@ -12,7 +11,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public Task<CommandHandlingResult> Handle(NotifyCashoutCompletedCommand command, IEventPublisher publisher)
         {
-            publisher.PublishEvent(new CashoutCompletedEvent()
+            publisher.PublishEvent(new Events.CashoutCompletedEvent()
             {
                 ToAddress = command.ToAddress,
                 AssetId = command.AssetId,
@@ -33,7 +32,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public Task<CommandHandlingResult> Handle(NotifyCashinCompletedCommand command, IEventPublisher publisher)
         {
-            publisher.PublishEvent(new CashinCompletedEvent()
+            publisher.PublishEvent(new Events.CashinCompletedEvent()
             {
                 ClientId = command.ClientId,
                 AssetId =  command.AssetId,
