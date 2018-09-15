@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Modules;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
