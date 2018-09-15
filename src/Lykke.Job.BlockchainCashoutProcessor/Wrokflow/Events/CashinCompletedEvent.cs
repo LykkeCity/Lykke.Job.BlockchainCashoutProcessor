@@ -1,4 +1,5 @@
 ﻿using System;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
