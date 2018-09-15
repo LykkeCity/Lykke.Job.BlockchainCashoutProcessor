@@ -12,7 +12,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public Task<CommandHandlingResult> Handle(NotifyCashoutCompletedCommand command, IEventPublisher publisher)
         {
-            publisher.PublishEvent(new Events.CashoutCompletedEvent()
+            publisher.PublishEvent(new CashoutCompletedEvent()
             {
                 ToAddress = command.ToAddress,
                 AssetId = command.AssetId,
@@ -33,7 +33,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         [UsedImplicitly]
         public Task<CommandHandlingResult> Handle(NotifyCashinCompletedCommand command, IEventPublisher publisher)
         {
-            publisher.PublishEvent(new Events.CashinCompletedEvent()
+            publisher.PublishEvent(new CashinCompletedEvent()
             {
                 ClientId = command.ClientId,
                 AssetId =  command.AssetId,
