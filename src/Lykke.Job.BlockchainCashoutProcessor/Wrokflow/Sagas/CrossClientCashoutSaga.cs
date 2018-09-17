@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
+using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Modules;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
@@ -79,9 +80,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             sender.SendCommand(new NotifyCashoutCompletedCommand()
                 {
                     Amount = aggregate.Amount,
+                    TransactionAmount = 0M,
+                    TransactionFee = 0M,
                     AssetId = aggregate.AssetId,
                     ClientId = aggregate.ClientId,
                     ToAddress = aggregate.ToAddress,
+                    OperationType = CashoutOperationType.OffBlockchain,
                     OperationId = aggregate.OperationId,
                     TransactionHash = "0x"
                 },
@@ -91,6 +95,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             {
                 AssetId = aggregate.AssetId,
                 Amount = aggregate.Amount,
+                TransactionAmount = 0M,
+                TransactionFee = 0M,
                 ClientId = aggregate.RecipientClientId,
                 OperationId = aggregate.CashinOperationId,
                 TransactionHash = "0x"

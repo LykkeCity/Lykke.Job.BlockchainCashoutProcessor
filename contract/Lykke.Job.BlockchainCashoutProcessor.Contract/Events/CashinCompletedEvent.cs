@@ -10,6 +10,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
 
         public decimal Amount { get; set; }
 
+        public decimal TransactionAmount { get; set; }
+
+        public decimal TransactionFee { get; set; }
+
         public Guid ClientId { get; set; }
 
         public Guid OperationId { get; set; }
