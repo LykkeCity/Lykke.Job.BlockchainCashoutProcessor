@@ -84,7 +84,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 {
                     Amount = aggregate.Amount,
                     TransactionAmount = 0M,
-                    Fee = 0M,
+                    TransactionFee = 0M,
                     AssetId = aggregate.AssetId,
                     ClientId = aggregate.ClientId,
                     ToAddress = aggregate.ToAddress,
@@ -101,9 +101,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 AssetId = aggregate.AssetId,
                 Amount = aggregate.Amount,
                 TransactionAmount = 0M,
-                Fee = 0M,
+                TransactionFee = 0M,
                 ClientId = aggregate.RecipientClientId,
-                OperationType = CashinOperationType.OffBlockchain,
                 OperationId = aggregate.CashinOperationId,
                 TransactionHash = "0x"
             }
