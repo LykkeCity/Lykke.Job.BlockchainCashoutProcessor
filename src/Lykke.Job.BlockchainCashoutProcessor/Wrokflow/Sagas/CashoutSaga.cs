@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
@@ -85,11 +86,21 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                 _chaosKitty.Meow(evt.OperationId);
             }
 
+            if (!aggregate.TransactionAmount.HasValue)
+            {
+                throw new InvalidOperationException("Transaction amount should be not null here");
+            }
+
+            if (!aggregate.Fee.HasValue)
+            {
+                throw new InvalidOperationException("Transaction fee should be not null here");
+            }
+
             sender.SendCommand(new NotifyCashoutCompletedCommand()
             {
                 Amount = aggregate.Amount,
-                TransactionAmount = aggregate.TransactionAmount ?? 0M,
-                Fee = aggregate.Fee ?? 0M,
+                TransactionAmount = aggregate.TransactionAmount.Value,
+                TransactionFee = aggregate.Fee.Value,
                 AssetId = aggregate.AssetId,
                 ClientId = aggregate.ClientId,
                 ToAddress = aggregate.ToAddress,
