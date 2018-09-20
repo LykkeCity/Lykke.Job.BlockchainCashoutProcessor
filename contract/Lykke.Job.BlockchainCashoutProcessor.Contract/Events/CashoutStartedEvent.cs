@@ -1,7 +1,7 @@
 ﻿using System;
 using MessagePack;
 
-namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events
+namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
 {
     [MessagePackObject]
     public class CashoutStartedEvent
