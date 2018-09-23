@@ -22,7 +22,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 TransactionFee = command.TransactionFee,
                 OperationType = command.OperationType,
                 OperationId = command.OperationId,
-                TransactionHash = command.TransactionHash
+                TransactionHash = command.TransactionHash,
+                StartMoment = command.StartMoment,
+                FinishMoment = command.FinishMoment
             });
 
             return Task.FromResult(CommandHandlingResult.Ok());

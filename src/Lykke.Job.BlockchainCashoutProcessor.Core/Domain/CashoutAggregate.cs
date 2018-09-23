@@ -154,14 +154,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 );
         }
 
-        public bool OnOperationCompleted(string transactionHash, decimal transactionAmount, decimal fee)
+        public bool OnOperationCompleted(string transactionHash, decimal transactionAmount, decimal fee, DateTime operationFinishMoment)
         {
             if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
                 return false;
             }
 
-            OperationFinishMoment = DateTime.UtcNow;
+            OperationFinishMoment = operationFinishMoment;
 
             TransactionHash = transactionHash;
             TransactionAmount = transactionAmount;
@@ -172,14 +172,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             return true;
         }
 
-        public bool OnOperationFailed(string error, CashoutErrorCode? errorCode)
+        public bool OnOperationFailed(string error, CashoutErrorCode? errorCode, DateTime operationFinishMoment)
         {
             if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
                 return false;
             }
 
-            OperationFinishMoment = DateTime.UtcNow;
+            OperationFinishMoment = operationFinishMoment;
 
             Error = error;
 

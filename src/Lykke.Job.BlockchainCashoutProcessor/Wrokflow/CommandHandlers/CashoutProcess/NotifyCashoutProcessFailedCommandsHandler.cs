@@ -18,7 +18,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 Amount = command.Amount,
                 OperationId = command.OperationId,
                 Error = command.Error,
-                ErrorCode = command.ErrorCode
+                ErrorCode = command.ErrorCode,
+                FinishMoment = command.FinishMoment,
+                StartMoment = command.StartMoment
             });
 
             return Task.FromResult(CommandHandlingResult.Ok());

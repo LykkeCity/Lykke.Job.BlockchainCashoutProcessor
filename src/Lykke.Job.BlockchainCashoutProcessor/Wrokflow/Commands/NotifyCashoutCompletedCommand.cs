@@ -24,5 +24,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands
         public Guid OperationId { get; set; }
 
         public string TransactionHash { get; set; }
+
+        public DateTime StartMoment { get; set; }
+
+        public DateTime FinishMoment { get; set; }
     }
 }
