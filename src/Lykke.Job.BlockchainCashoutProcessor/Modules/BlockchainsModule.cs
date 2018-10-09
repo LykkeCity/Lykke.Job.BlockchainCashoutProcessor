@@ -4,11 +4,9 @@ using System.Linq;
 using Autofac;
 using Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 using Lykke.Job.BlockchainCashoutProcessor.Services.Blockchains;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.Blockchain;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.PeriodicalHandlers;
 using Lykke.Service.BlockchainWallets.Client;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Modules
@@ -23,7 +21,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         public BlockchainsModule(
             ILog log,
             BlockchainsIntegrationSettings blockchainsIntegrationSettings,
-            BlockchainWalletsServiceClientSettings blockchainWalletsServiceClientSettings, BatchMonitoringSettings batchMonitoringSettings)
+            BlockchainWalletsServiceClientSettings blockchainWalletsServiceClientSettings, 
+            BatchMonitoringSettings batchMonitoringSettings)
         {
             _log = log ?? throw new ArgumentNullException(nameof(log));
             _blockchainsIntegrationSettings = blockchainsIntegrationSettings ?? throw new ArgumentNullException(nameof(blockchainsIntegrationSettings));
@@ -55,25 +54,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     blockchain.HotWalletAddress,
                     blockchain.AreCashoutsDisabled,
                     blockchain.CashoutAggregation != null ? 
-                        new BlockchainCashoutAggregationConfiguration(blockchain.CashoutAggregation.MaxPeriod, 
-                            blockchain.CashoutAggregation.MaxCount):
+                        new CashoutAggregationConfiguration(
+                            blockchain.CashoutAggregation.AgeThreshold, 
+                            blockchain.CashoutAggregation.CountThreshold):
                         null
                 );
 
                 blockchainConfigurations.Add(blockchain.Type, blockchainConfiguration);
-
-                if (blockchainConfiguration.SupportCashoutAggregation)
-                {
-                    builder.RegisterType<ActiveBatchExectutionPeriodicalHandler>()
-                        .As<IActiveBatchExectutionPeriodicalHandler>()
-                        .SingleInstance()
-                        .WithParameter(TypedParameter.From(blockchain.CashoutAggregation))
-                        .WithParameter(TypedParameter.From(blockchain.Type))
-                        .WithParameter(TypedParameter.From(_batchMonitoringSettings.Period))
-                        .WithParameter(TypedParameter.From(blockchainConfiguration.CashoutAggregation))
-                        .As<IStartable>()
-                        .AutoActivate();
-                }
             }
 
             builder.RegisterType<BlockchainConfigurationsProvider>()

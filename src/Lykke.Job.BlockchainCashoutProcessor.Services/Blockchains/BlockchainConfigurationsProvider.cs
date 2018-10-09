@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Services.Blockchains
 {

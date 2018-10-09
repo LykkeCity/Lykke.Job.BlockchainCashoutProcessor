@@ -8,30 +8,30 @@ using Lykke.SettingsReader;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 {
-    public class CashoutBatchRepository:ICashoutBatchRepository
+    public class CashoutsBatchRepository:ICashoutsBatchRepository
     {
-        private readonly INoSQLTableStorage<CashoutBatchEntity> _storage;
+        private readonly INoSQLTableStorage<CashoutsBatchEntity> _storage;
 
-        public static ICashoutBatchRepository Create(IReloadingManager<string> connectionString, ILog log)
+        public static ICashoutsBatchRepository Create(IReloadingManager<string> connectionString, ILog log)
         {
-            var storage = AzureTableStorage<CashoutBatchEntity>.Create(
+            var storage = AzureTableStorage<CashoutsBatchEntity>.Create(
                 connectionString,
                 "CashoutBatch",
                 log);
 
-            return new CashoutBatchRepository(storage);
+            return new CashoutsBatchRepository(storage);
         }
 
-        private CashoutBatchRepository(INoSQLTableStorage<CashoutBatchEntity> storage)
+        private CashoutsBatchRepository(INoSQLTableStorage<CashoutsBatchEntity> storage)
         {
             _storage = storage;
         }
 
 
-        public async Task<CashoutBatchAggregate> GetOrAddAsync(Guid batchId, Func<CashoutBatchAggregate> newAggregateFactory)
+        public async Task<CashoutsBatchAggregate> GetOrAddAsync(Guid batchId, Func<CashoutsBatchAggregate> newAggregateFactory)
         {
-            var partitionKey = CashoutBatchEntity.GetPartitionKey(batchId);
-            var rowKey = CashoutBatchEntity.GetRowKey(batchId);
+            var partitionKey = CashoutsBatchEntity.GetPartitionKey(batchId);
+            var rowKey = CashoutsBatchEntity.GetRowKey(batchId);
 
             var startedEntity = await _storage.GetOrInsertAsync(
                 partitionKey,
@@ -40,20 +40,20 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
                 {
                     var newAggregate = newAggregateFactory();
 
-                    return CashoutBatchEntity.FromDomain(newAggregate);
+                    return CashoutsBatchEntity.FromDomain(newAggregate);
                 });
 
             return startedEntity.ToDomain();
         }
 
-        public async Task SaveAsync(CashoutBatchAggregate aggregate)
+        public async Task SaveAsync(CashoutsBatchAggregate aggregate)
         {
-            var entity = CashoutBatchEntity.FromDomain(aggregate);
+            var entity = CashoutsBatchEntity.FromDomain(aggregate);
 
             await _storage.ReplaceAsync(entity);
         }
 
-        public async Task<CashoutBatchAggregate> GetAsync(Guid batchId)
+        public async Task<CashoutsBatchAggregate> GetAsync(Guid batchId)
         {
             var aggregate = await TryGetAsync(batchId);
 
@@ -65,10 +65,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
             return aggregate;
         }
 
-        public async Task<CashoutBatchAggregate> TryGetAsync(Guid batchId)
+        public async Task<CashoutsBatchAggregate> TryGetAsync(Guid batchId)
         {
-            var partitionKey = CashoutBatchEntity.GetPartitionKey(batchId);
-            var rowKey = CashoutBatchEntity.GetRowKey(batchId);
+            var partitionKey = CashoutsBatchEntity.GetPartitionKey(batchId);
+            var rowKey = CashoutsBatchEntity.GetRowKey(batchId);
 
             var entity = await _storage.GetDataAsync(partitionKey, rowKey);
 

@@ -4,14 +4,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 {
     public class BatchedCashoutValueType : IEquatable<BatchedCashoutValueType>
     {
-        public Guid OperationId { get; }
-        public string DestinationAddress { get; }
+        public Guid CashoutId { get; }
+        public Guid ClientId { get; }
+        public string ToAddress { get; }
         public decimal Amount { get; }
 
-        public BatchedCashoutValueType(Guid operationId, string destinationAddress, decimal amount)
+        public BatchedCashoutValueType(Guid cashoutId, Guid clientId, string toAddress, decimal amount)
         {
-            OperationId = operationId;
-            DestinationAddress = destinationAddress;
+            CashoutId = cashoutId;
+            ClientId = clientId;
+            ToAddress = toAddress;
             Amount = amount;
         }
 
@@ -22,7 +24,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             if (ReferenceEquals(this, other)) 
                 return true;
 
-            return OperationId.Equals(other.OperationId) && string.Equals(DestinationAddress, other.DestinationAddress) && Amount == other.Amount;
+            return CashoutId.Equals(other.CashoutId) 
+                   && ClientId.Equals(other.ClientId)
+                   && string.Equals(ToAddress, other.ToAddress) 
+                   && Amount == other.Amount;
         }
 
         public override bool Equals(object obj)
@@ -31,7 +36,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 return false;
             if (ReferenceEquals(this, obj)) 
                 return true;
-            if (obj.GetType() != this.GetType()) 
+            if (obj.GetType() != GetType()) 
                 return false;
 
             return Equals((BatchedCashoutValueType) obj);
@@ -41,8 +46,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
         {
             unchecked
             {
-                var hashCode = OperationId.GetHashCode();
-                hashCode = (hashCode * 397) ^ (DestinationAddress != null ? DestinationAddress.GetHashCode() : 0);
+                var hashCode = CashoutId.GetHashCode();
+                hashCode = (hashCode * 397) ^ ClientId.GetHashCode();
+                hashCode = (hashCode * 397) ^ (ToAddress != null ? ToAddress.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Amount.GetHashCode();
 
                 return hashCode;

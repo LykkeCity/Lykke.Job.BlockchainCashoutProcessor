@@ -96,15 +96,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
                 sender.SendCommand
                 (
-                    new NotifyCashinCompletedCommand
+                    new NotifyCrossClientCashinCompletedCommand
                     {
                         AssetId = aggregate.AssetId,
                         Amount = aggregate.Amount,
                         TransactionAmount = 0M,
                         TransactionFee = 0M,
                         ClientId = aggregate.RecipientClientId,
-                        OperationId = aggregate.CashinOperationId,
-                        TransactionHash = "0x"
+                        OperationId = aggregate.CashinOperationId
                     },
                     BlockchainCashoutProcessorBoundedContext.Name
                 );

@@ -5,10 +5,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
     public enum CashoutState
     {
         Started,
- 
-        OperationIsFinished,
-        AggregatedOperationStarted,
-        AddedToBatch,
-        AggregatedOperationIsFinished
+        OperationIsFinished
     }
 }

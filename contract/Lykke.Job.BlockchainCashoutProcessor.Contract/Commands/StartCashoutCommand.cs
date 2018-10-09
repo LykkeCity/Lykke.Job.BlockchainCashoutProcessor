@@ -8,38 +8,33 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Commands
     /// Command to start the cashout in the generic blockchain integration layer
     /// </summary>
     [PublicAPI]
-    [MessagePackObject]
+    [MessagePackObject(keyAsPropertyName: true)]
     public class StartCashoutCommand
     {
         /// <summary>
         /// Cashout operation ID.
         /// </summary>
-        [Key(0)]
         public Guid OperationId { get; set; }
 
         /// <summary>
         /// Lykke asset ID.
         /// </summary>
-        [Key(1)]
         public string AssetId { get; set; }
 
         /// <summary>
         /// Recipient address.
         /// </summary>
-        [Key(2)]
         public string ToAddress { get; set; }
 
         /// <summary>
         /// Amount of the funds to cashout.
         /// Should be positive number.
         /// </summary>
-        [Key(3)]
         public decimal Amount { get; set; }
 
         /// <summary>
         /// Lykke client ID.
         /// </summary>
-        [Key(4)]
         public Guid ClientId { get; set; }
     }
 }

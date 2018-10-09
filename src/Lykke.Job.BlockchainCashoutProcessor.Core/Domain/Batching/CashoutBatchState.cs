@@ -2,8 +2,10 @@
 {
     public enum CashoutBatchState
     {
-        Started,
-        Suspended,
+        FillingUp,
+        Expired,
+        Closed,
+        IdRevoked,
         Finished
     }
 }

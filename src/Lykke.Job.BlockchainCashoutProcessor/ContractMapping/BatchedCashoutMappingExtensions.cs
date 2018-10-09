@@ -1,23 +1,19 @@
-﻿using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+﻿using Lykke.Job.BlockchainCashoutProcessor.Contract;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.ContractMapping
 {
     public static class BatchedCashoutMappingExtensions
     {
-        public static BatchedCashout FromDomain(this BatchedCashoutValueType domain)
+        public static BatchedCashout ToContract(this BatchedCashoutValueType domain)
         {
             return new BatchedCashout
             {
-                OperationId = domain.OperationId,
-                DestinationAddress = domain.DestinationAddress,
+                OperationId = domain.CashoutId,
+                ClientId = domain.ClientId,
+                ToAddress = domain.ToAddress,
                 Amount = domain.Amount
             };
-        }
-
-        public static BatchedCashoutValueType ToDmoain(this BatchedCashout contract)
-        {
-            return new BatchedCashoutValueType(contract.OperationId, contract.DestinationAddress, contract.Amount);
         }
     }
 }

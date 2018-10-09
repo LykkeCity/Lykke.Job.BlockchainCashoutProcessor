@@ -98,7 +98,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
             BatchId = batchId;
         }
 
-        public static CashoutAggregate StartNew(
+        public static CashoutAggregate Start(
             Guid operationId,
             Guid clientId,
             string blockchainType,
@@ -118,28 +118,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
                 amount,
                 assetId,
                 CashoutState.Started);
-        }
-
-        public static CashoutAggregate StartAggregatedNew(
-            Guid operationId,
-            Guid clientId,
-            string blockchainType,
-            string blockchainAssetId,
-            string hotWalletAddress,
-            string toAddress,
-            decimal amount,
-            string assetId)
-        {
-            return new CashoutAggregate(
-                operationId,
-                clientId,
-                blockchainType,
-                blockchainAssetId,
-                hotWalletAddress,
-                toAddress,
-                amount,
-                assetId,
-                CashoutState.AggregatedOperationStarted);
         }
 
         public static CashoutAggregate Restore(
@@ -185,8 +163,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public bool OnOperationCompleted(string transactionHash, decimal transactionAmount, decimal fee, DateTime operationFinishMoment)
         {
-            if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished) &&
-                !SwitchState(CashoutState.AddedToBatch, CashoutState.AggregatedOperationIsFinished))
+            if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
                 return false;
             }
@@ -204,8 +181,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
 
         public bool OnOperationFailed(string error, CashoutErrorCode? errorCode, DateTime operationFinishMoment)
         {
-            if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished) &&
-                !SwitchState(CashoutState.AddedToBatch, CashoutState.AggregatedOperationIsFinished))
+            if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
             {
                 return false;
             }

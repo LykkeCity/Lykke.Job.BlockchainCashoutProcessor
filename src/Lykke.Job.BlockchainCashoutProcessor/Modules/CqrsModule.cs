@@ -70,7 +70,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             // Sagas
             builder.RegisterType<CashoutSaga>();
             builder.RegisterType<CrossClientCashoutSaga>();
-            builder.RegisterType<CashoutBatchSaga>();
+            builder.RegisterType<CashoutsBatchSaga>();
 
             // Command handlers
             builder.RegisterType<StartCashoutCommandsHandler>()
@@ -82,7 +82,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<DeleteActiveBatchCommandHandler>();
             builder.RegisterType<SuspendActiveBatchCommandHandler>();
             builder.RegisterType<StartBatchExecutionCommandHandler>();
-            builder.RegisterType<AddOperationToBatchCommandHandler>();
 
             builder.Register(ctx => CreateEngine(ctx, messagingEngine))
                 .As<ICqrsEngine>()
@@ -112,11 +111,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 Register.BoundedContext(Self)
                     .FailedCommandRetryDelay(defaultRetryDelay)
 
-                    .ListeningCommands(typeof(NotifyCashinCompletedCommand),
+                    .ListeningCommands(typeof(NotifyCrossClientCashinCompletedCommand),
                         typeof(NotifyCashoutCompletedCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<NotifyOpetationFinishedCommandsHandler>()
-                    .PublishingEvents(typeof(CashoutCompletedEvent),
+                    .PublishingEvents(typeof(CashoutsBatchCompletedEvent),
                                       typeof(CrossClientCashinCompletedEvent))
                     .With(eventsRoute)
 
@@ -133,12 +132,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(
                         typeof(CashoutStartedEvent),
                         typeof(CrossClientCashoutStartedEvent),
-                        typeof(CashoutBatchingStartedEvent))
+                        typeof(AddCashoutToActiveBatchRequestedEvent))
                     .With(defaultPipeline)
 
-                    .ListeningCommands(typeof(AddOperationToBatchCommand))
+                    .ListeningCommands(typeof(AddCashoutToBatchCommand))
                     .On(defaultRoute)
-                    .WithCommandsHandler<AddOperationToBatchCommandHandler>()
+                    .WithCommandsHandler<AddCashoutToBatchCommandsHandler>()
 
                     .ListeningCommands(typeof(EnrollToMatchingEngineCommand))
                     .On(defaultRoute)
@@ -180,11 +179,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .To(BlockchainOperationsExecutorBoundedContext.Name)
                     .With(defaultPipeline)
 
-                    .ListeningEvents(typeof(CashoutBatchingStartedEvent))
+                    .ListeningEvents(typeof(AddCashoutToActiveBatchRequestedEvent))
                     .From(Self)
                     .On(defaultRoute)
                     .PublishingCommands(
-                        typeof(AddOperationToBatchCommand))
+                        typeof(AddCashoutToBatchCommand))
                     .To(Self)
                     .With(defaultPipeline)
 
@@ -209,12 +208,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningEvents(typeof(CashinEnrolledToMatchingEngineEvent))
                     .From(Self)
                     .On(defaultRoute)
-                    .PublishingCommands(typeof(NotifyCashinCompletedCommand),
+                    .PublishingCommands(typeof(NotifyCrossClientCashinCompletedCommand),
                                         typeof(NotifyCashoutCompletedCommand))
                     .To(Self)
                     .With(defaultPipeline),
 
-                 Register.Saga<CashoutBatchSaga>($"{Self}.batch-saga")
+                 Register.Saga<CashoutsBatchSaga>($"{Self}.batch-saga")
                      .ListeningEvents(typeof(BatchExecutionStartedEvent))
                      .From(Self)
                      .On(defaultRoute)

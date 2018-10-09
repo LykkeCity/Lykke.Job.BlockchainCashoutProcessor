@@ -2,12 +2,19 @@
 using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
+using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
+using Lykke.Job.BlockchainCashoutProcessor.StateMachine;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
 using Lykke.Service.Assets.Client;
+using Lykke.Service.Assets.Client.Models;
 using Lykke.Service.BlockchainWallets.Client;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
@@ -16,16 +23,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
     public class StartCashoutCommandsHandler
     {
         private readonly ILog _log;
+        private readonly IChaosKitty _chaosKitty;
+        private readonly ICashoutsBatchRepository _cashoutsBatchRepository;
+        private readonly IActiveCashoutsBatchIdRepository _activeCashoutsBatchIdRepository;
         private readonly IBlockchainConfigurationsProvider _blockchainConfigurationProvider;
         private readonly IAssetsServiceWithCache _assetsService;
         private readonly IBlockchainWalletsClient _walletsClient;
+        private readonly CqrsSettings _cqrsSettings;
         private readonly bool _disableDirectCrossClientCashouts;
 
         public StartCashoutCommandsHandler(
             ILog log,
+            IChaosKitty chaosKitty,
+            ICashoutsBatchRepository cashoutsBatchRepository,
+            IActiveCashoutsBatchIdRepository activeCashoutsBatchIdRepository,
             IBlockchainConfigurationsProvider blockchainConfigurationProvider,
             IAssetsServiceWithCache assetsService,
             IBlockchainWalletsClient walletsClient,
+            CqrsSettings cqrsSettings,
             bool disableDirectCrossClientCashouts)
         {
             if (log == null)
@@ -34,9 +49,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             }
 
             _log = log.CreateComponentScope(nameof(StartCashoutCommandsHandler));
+            _chaosKitty = chaosKitty;
+            _cashoutsBatchRepository = cashoutsBatchRepository;
+            _activeCashoutsBatchIdRepository = activeCashoutsBatchIdRepository;
             _blockchainConfigurationProvider = blockchainConfigurationProvider ?? throw new ArgumentNullException(nameof(blockchainConfigurationProvider));
             _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsService));
             _walletsClient = walletsClient ?? throw new ArgumentNullException(nameof(walletsClient));
+            _cqrsSettings = cqrsSettings;
             _disableDirectCrossClientCashouts = disableDirectCrossClientCashouts;
         }
 
@@ -64,66 +83,166 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             if (blockchainConfiguration.AreCashoutsDisabled)
             {
-                _log.WriteInfo(nameof(StartCashoutCommand), command, $"Cashouts for {asset.BlockchainIntegrationLayerId} are disabled");
+                _log.WriteWarning(nameof(StartCashoutCommand), command, $"Cashouts for {asset.BlockchainIntegrationLayerId} are disabled");
 
-                return CommandHandlingResult.Fail(TimeSpan.FromHours(1));
+                return CommandHandlingResult.Fail(TimeSpan.FromMinutes(10));
             }
 
-            var toAddress = command.ToAddress;
             var recipientClientId = _disableDirectCrossClientCashouts
                 ? null
                 : await _walletsClient.TryGetClientIdAsync(
                     asset.BlockchainIntegrationLayerId,
                     asset.BlockchainIntegrationLayerAssetId,
-                    toAddress);
+                    command.ToAddress);
 
-            if (!recipientClientId.HasValue)
+            if (recipientClientId.HasValue)
             {
-                // TODO: It should be obtained from the BLockchain integration capabilities instead of settings
-                if (blockchainConfiguration.SupportCashoutAggregation)
-                {
-                    publisher.PublishEvent(new CashoutBatchingStartedEvent
-                    {
-                        OperationId = command.OperationId,
-                        BlockchainType = asset.BlockchainIntegrationLayerId,
-                        BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
-                        HotWalletAddress = blockchainConfiguration.HotWalletAddress,
-                        ToAddress = toAddress,
-                        AssetId = command.AssetId,
-                        Amount = command.Amount,
-                        ClientId = command.ClientId
-                    });
-                }
-                else
-                {
-                    publisher.PublishEvent(new CashoutStartedEvent
-                    {
-                        OperationId = command.OperationId,
-                        BlockchainType = asset.BlockchainIntegrationLayerId,
-                        BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
-                        HotWalletAddress = blockchainConfiguration.HotWalletAddress,
-                        ToAddress = toAddress,
-                        AssetId = command.AssetId,
-                        Amount = command.Amount,
-                        ClientId = command.ClientId
-                    });
-                }
+                return StartCrossClientCashaout
+                (
+                    command,
+                    publisher,
+                    asset,
+                    blockchainConfiguration,
+                    recipientClientId.Value
+                );
             }
-            else //CrossClient Cashout
+
+            if (blockchainConfiguration.SupportCashoutAggregation)
             {
-                publisher.PublishEvent(new CrossClientCashoutStartedEvent
-                {
-                    OperationId = command.OperationId,
-                    BlockchainType = asset.BlockchainIntegrationLayerId,
-                    BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
-                    ToAddress = toAddress,
-                    HotWalletAddress = blockchainConfiguration.HotWalletAddress,
-                    AssetId = command.AssetId,
-                    Amount = command.Amount,
-                    FromClientId = command.ClientId,
-                    RecipientClientId = recipientClientId.Value
-                });
+                return await StartBatchedCashoutAsync
+                (
+                    command,
+                    publisher,
+                    asset,
+                    blockchainConfiguration,
+                    blockchainConfiguration.CashoutAggregation
+                );
             }
+
+            return StartRegularCashout
+            (
+                command,
+                publisher,
+                asset,
+                blockchainConfiguration
+            );
+        }
+
+        private async Task<CommandHandlingResult> StartBatchedCashoutAsync(
+            StartCashoutCommand command, 
+            IEventPublisher publisher, 
+            Asset asset,
+            BlockchainConfiguration blockchainConfiguration,
+            CashoutAggregationConfiguration aggregationConfiguration)
+        {
+            var blockchainType = asset.BlockchainIntegrationLayerId;
+            var blockchainAssetId = asset.BlockchainIntegrationLayerAssetId;
+
+            var activeCashoutBatchId = await _activeCashoutsBatchIdRepository.GetActiveOrNextBatchId
+            (
+                blockchainType,
+                blockchainAssetId,
+                blockchainConfiguration.HotWalletAddress,
+                CashoutsBatchAggregate.GetNextId
+            );
+                    
+            _chaosKitty.Meow(command.OperationId);
+
+            var batch = await _cashoutsBatchRepository.GetOrAddAsync
+            (
+                activeCashoutBatchId.BatchId,
+                () => CashoutsBatchAggregate.StartNew
+                (
+                    activeCashoutBatchId.BatchId,
+                    blockchainType,
+                    asset.Id,
+                    blockchainAssetId,
+                    blockchainConfiguration.HotWalletAddress,
+                    aggregationConfiguration.CountThreshold,
+                    aggregationConfiguration.AgeThreshold
+                )
+            );
+
+            _chaosKitty.Meow(command.OperationId);
+            
+            if (!batch.IsStillFilledUp)
+            {
+                return CommandHandlingResult.Fail(_cqrsSettings.RetryDelay);
+            }
+            
+            var transitionResult = batch.AddCashout
+            (
+                command.OperationId,
+                command.ClientId,
+                command.ToAddress,
+                command.Amount
+            );
+
+            if (transitionResult.ShouldSaveAggregate())
+            {
+                await _cashoutsBatchRepository.SaveAsync(batch);
+
+                _chaosKitty.Meow(command.OperationId);
+            }
+
+            if (transitionResult.ShouldPublishEvents())
+            {
+                publisher.PublishEvent
+                (
+                    new CashoutAddedToBatchEvent
+                    {
+                        BatchId = batch.BatchId,
+                        CashoutsCount = batch.Cashouts.Count,
+                        CashoutsCountThreshold = batch.CountThreshold
+                    }
+                );
+
+                _chaosKitty.Meow(command.OperationId);
+            }
+
+            return CommandHandlingResult.Ok();
+        }
+
+        private static CommandHandlingResult StartRegularCashout(
+            StartCashoutCommand command, 
+            IEventPublisher publisher, 
+            Asset asset,
+            BlockchainConfiguration blockchainConfiguration)
+        {
+            publisher.PublishEvent(new CashoutStartedEvent
+            {
+                OperationId = command.OperationId,
+                BlockchainType = asset.BlockchainIntegrationLayerId,
+                BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
+                HotWalletAddress = blockchainConfiguration.HotWalletAddress,
+                ToAddress = command.ToAddress,
+                AssetId = command.AssetId,
+                Amount = command.Amount,
+                ClientId = command.ClientId
+            });
+
+            return CommandHandlingResult.Ok();
+        }
+
+        private static CommandHandlingResult StartCrossClientCashaout(
+            StartCashoutCommand command, 
+            IEventPublisher publisher, 
+            Asset asset,
+            BlockchainConfiguration blockchainConfiguration, 
+            Guid recipientClientId)
+        {
+            publisher.PublishEvent(new CrossClientCashoutStartedEvent
+            {
+                OperationId = command.OperationId,
+                BlockchainType = asset.BlockchainIntegrationLayerId,
+                BlockchainAssetId = asset.BlockchainIntegrationLayerAssetId,
+                ToAddress = command.ToAddress,
+                HotWalletAddress = blockchainConfiguration.HotWalletAddress,
+                AssetId = command.AssetId,
+                Amount = command.Amount,
+                FromClientId = command.ClientId,
+                RecipientClientId = recipientClientId
+            });
 
             return CommandHandlingResult.Ok();
         }

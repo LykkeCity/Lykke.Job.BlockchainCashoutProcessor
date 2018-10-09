@@ -36,9 +36,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         [UsedImplicitly]
         private async Task Handle(CashoutStartedEvent evt, ICommandSender sender)
         {
-            var aggregate = await _cashoutRepository.GetOrAddAsync(
+            var aggregate = await _cashoutRepository.GetOrAddAsync
+            (
                 evt.OperationId,
-                () => CashoutAggregate.StartNew(
+                () => CashoutAggregate.Start
+                (
                     evt.OperationId,
                     evt.ClientId,
                     evt.BlockchainType,
@@ -46,7 +48,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     evt.HotWalletAddress,
                     evt.ToAddress,
                     evt.Amount,
-                    evt.AssetId));
+                    evt.AssetId
+                )
+            );
 
             _chaosKitty.Meow(evt.OperationId);
 
@@ -54,48 +58,21 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
             {
                 // TODO: Add tag (cashin/cashiout) to the operation, and pass it to the operations executor?
 
-                sender.SendCommand(new BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand
-                {
-                    OperationId = aggregate.OperationId,
-                    FromAddress = aggregate.HotWalletAddress,
-                    ToAddress = aggregate.ToAddress,
-                    AssetId = aggregate.AssetId,
-                    Amount = aggregate.Amount,
-                    // For the cashout all amount should be transfered to the destination address,
-                    // so the fee shouldn't be included in the amount.
-                    IncludeFee = false
-                }, BlockchainOperationsExecutorBoundedContext.Name); 
-            }
-        }
-
-        [UsedImplicitly]
-        private async Task Handle(CashoutBatchingStartedEvent evt, ICommandSender sender)
-        {
-            var aggregate = await _cashoutRepository.GetOrAddAsync(
-                evt.OperationId,
-                () => CashoutAggregate.StartAggregatedNew(
-                    evt.OperationId,
-                    evt.ClientId,
-                    evt.BlockchainType,
-                    evt.BlockchainAssetId,
-                    evt.HotWalletAddress,
-                    evt.ToAddress,
-                    evt.Amount,
-                    evt.AssetId));
-
-            _chaosKitty.Meow(evt.OperationId);
-
-            if (aggregate.State == CashoutState.AggregatedOperationStarted)
-            {
-                sender.SendCommand(new AddOperationToBatchCommand
-                {
-                    BlockchainType = aggregate.BlockchainType,
-                    BlockchainAssetId = aggregate.BlockchainAssetId,
-                    OperationId = aggregate.OperationId,
-                    HotWalletAddress = aggregate.HotWalletAddress,
-                    Amount = aggregate.Amount,
-                    ToAddress = aggregate.ToAddress
-                }, BlockchainCashoutProcessorBoundedContext.Name);
+                sender.SendCommand
+                (
+                    new BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand
+                    {
+                        OperationId = aggregate.OperationId,
+                        FromAddress = aggregate.HotWalletAddress,
+                        ToAddress = aggregate.ToAddress,
+                        AssetId = aggregate.AssetId,
+                        Amount = aggregate.Amount,
+                        // For the cashout all amount should be transfered to the destination address,
+                        // so the fee shouldn't be included in the amount.
+                        IncludeFee = false
+                    },
+                    BlockchainOperationsExecutorBoundedContext.Name
+                );
             }
         }
 
@@ -114,36 +91,39 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnOperationCompleted(evt.TransactionHash, evt.TransactionAmount, evt.Fee, operationFinishMoment))
             {
-                await _cashoutRepository.SaveAsync(aggregate);
+                if (!aggregate.TransactionAmount.HasValue)
+                {
+                    throw new InvalidOperationException("Transaction amount should be not null here");
+                }
+
+                if (!aggregate.Fee.HasValue)
+                {
+                    throw new InvalidOperationException("Transaction fee should be not null here");
+                }
+
+                sender.SendCommand
+                (
+                    new NotifyCashoutCompletedCommand
+                    {
+                        Amount = aggregate.Amount,
+                        TransactionAmount = aggregate.TransactionAmount.Value,
+                        TransactionFee = aggregate.Fee.Value,
+                        AssetId = aggregate.AssetId,
+                        ClientId = aggregate.ClientId,
+                        ToAddress = aggregate.ToAddress,
+                        OperationType = CashoutOperationType.OnBlockchain,
+                        OperationId = aggregate.OperationId,
+                        TransactionHash = aggregate.TransactionHash,
+                        StartMoment = aggregate.StartMoment,
+                        FinishMoment = operationFinishMoment
+                    },
+                    BlockchainCashoutProcessorBoundedContext.Name
+                );
 
                 _chaosKitty.Meow(evt.OperationId);
-            }
 
-            if (!aggregate.TransactionAmount.HasValue)
-            {
-                throw new InvalidOperationException("Transaction amount should be not null here");
+                await _cashoutRepository.SaveAsync(aggregate);
             }
-
-            if (!aggregate.Fee.HasValue)
-            {
-                throw new InvalidOperationException("Transaction fee should be not null here");
-            }
-
-            sender.SendCommand(new NotifyCashoutCompletedCommand
-            {
-                Amount = aggregate.Amount,
-                TransactionAmount = aggregate.TransactionAmount.Value,
-                TransactionFee = aggregate.Fee.Value,
-                AssetId = aggregate.AssetId,
-                ClientId = aggregate.ClientId,
-                ToAddress = aggregate.ToAddress,
-                OperationType = CashoutOperationType.OnBlockchain,
-                OperationId = aggregate.OperationId,
-                TransactionHash = aggregate.TransactionHash,
-                StartMoment = aggregate.StartMoment,
-                FinishMoment = operationFinishMoment
-            },
-            BlockchainCashoutProcessorBoundedContext.Name);
         }
 
         [UsedImplicitly]
