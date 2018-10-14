@@ -43,7 +43,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batching
             {
                 publisher.PublishEvent
                 (
-                    new BatchIdRevokedEvent
+                    new ActiveBatchIdRevokedEvent
                     {
                         BatchId = batch.BatchId
                     }

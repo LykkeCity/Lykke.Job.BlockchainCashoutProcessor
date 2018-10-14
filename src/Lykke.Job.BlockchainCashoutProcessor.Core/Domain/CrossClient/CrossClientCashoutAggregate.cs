@@ -87,7 +87,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
             CashinOperationId = cashinOperationId;
         }
 
-        public static CrossClientCashoutAggregate StartNewCrossClient(
+        public static CrossClientCashoutAggregate Start(
            Guid operationId,
            Guid clientId,
            string blockchainType,
@@ -96,7 +96,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
            string toAddress,
            decimal amount,
            string assetId,
-           Guid RecipientClientId)
+           Guid recipientClientId)
         {
             return new CrossClientCashoutAggregate(
                 "*",
@@ -108,7 +108,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
                 toAddress,
                 amount,
                 assetId,
-                RecipientClientId,
+                recipientClientId,
                 Guid.NewGuid());
         }
 

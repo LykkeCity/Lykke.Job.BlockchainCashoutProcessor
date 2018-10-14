@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables;
-using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.SettingsReader;
 
@@ -12,12 +12,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
     {
         private readonly INoSQLTableStorage<ActiveCashoutsBatchIdEntity> _storage;
 
-        public static IActiveCashoutsBatchIdRepository Create(IReloadingManager<string> connectionString, ILog log)
+        public static IActiveCashoutsBatchIdRepository Create(IReloadingManager<string> connectionString, ILogFactory logFactory)
         {
             var storage = AzureTableStorage<ActiveCashoutsBatchIdEntity>.Create(
                 connectionString,
-                "ActiveCashoutBatch",
-                log);
+                "ActiveCashoutsBatchId",
+                logFactory);
 
             return new ActiveCashoutsBatchIdRepository(storage);
         }

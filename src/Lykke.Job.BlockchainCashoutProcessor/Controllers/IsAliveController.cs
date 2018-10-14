@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Net;
 using Lykke.Common.Api.Contract.Responses;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
+using Lykke.Job.BlockchainCashoutProcessor.AppServices.Health;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 

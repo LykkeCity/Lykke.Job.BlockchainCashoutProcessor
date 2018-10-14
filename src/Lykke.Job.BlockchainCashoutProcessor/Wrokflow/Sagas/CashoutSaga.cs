@@ -3,12 +3,11 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
-using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Regular;
 using Lykke.Job.BlockchainCashoutProcessor.Mappers;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Modules;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Regular;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
@@ -111,13 +110,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                         AssetId = aggregate.AssetId,
                         ClientId = aggregate.ClientId,
                         ToAddress = aggregate.ToAddress,
-                        OperationType = CashoutOperationType.OnBlockchain,
                         OperationId = aggregate.OperationId,
                         TransactionHash = aggregate.TransactionHash,
                         StartMoment = aggregate.StartMoment,
                         FinishMoment = operationFinishMoment
                     },
-                    BlockchainCashoutProcessorBoundedContext.Name
+                    CqrsModule.Self
                 );
 
                 _chaosKitty.Meow(evt.OperationId);
@@ -153,7 +151,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                             StartMoment = aggregate.StartMoment,
                             FinishMoment = operationFinishMoment
                         },
-                        BlockchainCashoutProcessorBoundedContext.Name
+                        CqrsModule.Self
                     );
                 }
 

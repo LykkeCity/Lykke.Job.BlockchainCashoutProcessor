@@ -7,8 +7,8 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Modules;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.CrossClient;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CrossClient;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
@@ -37,9 +37,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         {
             var aggregate = await _cashoutRepository.GetOrAddAsync(
                 evt.OperationId,
-                () => CrossClientCashoutAggregate.StartNewCrossClient(
+                () => CrossClientCashoutAggregate.Start(
                     evt.OperationId,
-                    evt.FromClientId,
+                    evt.ClientId,
                     evt.BlockchainType,
                     evt.BlockchainAssetId,
                     evt.HotWalletAddress,
@@ -52,15 +52,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.State == CrossClientCashoutState.Started)
             {
-                sender.SendCommand(new EnrollToMatchingEngineCommand
-                {
-                    CashinOperationId = aggregate.CashinOperationId,
-                    CashoutOperationId = aggregate.OperationId,
-                    RecipientClientId = aggregate.RecipientClientId,
-                    Amount = aggregate.Amount,
-                    AssetId = aggregate.AssetId
-                },
-                    CqrsModule.Self);
+                sender.SendCommand
+                (
+                    new EnrollToMatchingEngineCommand
+                    {
+                        CashinOperationId = aggregate.CashinOperationId,
+                        CashoutOperationId = aggregate.OperationId,
+                        RecipientClientId = aggregate.RecipientClientId,
+                        Amount = aggregate.Amount,
+                        AssetId = aggregate.AssetId
+                    },
+                    CqrsModule.Self
+                );
 
                 _chaosKitty.Meow(evt.OperationId);
             }
@@ -75,35 +78,23 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnEnrolledToMatchingEngine(matchingEngineEnrollementMoment))
             {
-                sender.SendCommand
-                (
-                    new NotifyCashoutCompletedCommand
-                    {
-                        Amount = aggregate.Amount,
-                        TransactionAmount = 0M,
-                        TransactionFee = 0M,
-                        AssetId = aggregate.AssetId,
-                        ClientId = aggregate.ClientId,
-                        ToAddress = aggregate.ToAddress,
-                        OperationType = CashoutOperationType.OffBlockchain,
-                        OperationId = aggregate.OperationId,
-                        TransactionHash = "0x",
-                        StartMoment = aggregate.StartMoment,
-                        FinishMoment = matchingEngineEnrollementMoment
-                    },
-                    BlockchainCashoutProcessorBoundedContext.Name
-                );
+                if (!aggregate.MatchingEngineEnrollementMoment.HasValue)
+                {
+                    throw new InvalidOperationException("ME enrollement moment should be not null here");
+                }
 
                 sender.SendCommand
                 (
-                    new NotifyCrossClientCashinCompletedCommand
+                    new NotifyCrossClientCashoutCompletedCommand
                     {
+                        OperationId = aggregate.OperationId,
+                        ClientId = aggregate.ClientId,
+                        CashinOperationId = aggregate.CashinOperationId,
+                        RecipientClientId = aggregate.RecipientClientId,
                         AssetId = aggregate.AssetId,
                         Amount = aggregate.Amount,
-                        TransactionAmount = 0M,
-                        TransactionFee = 0M,
-                        ClientId = aggregate.RecipientClientId,
-                        OperationId = aggregate.CashinOperationId
+                        StartMoment = aggregate.StartMoment,
+                        FinishMoment = aggregate.MatchingEngineEnrollementMoment.Value
                     },
                     BlockchainCashoutProcessorBoundedContext.Name
                 );

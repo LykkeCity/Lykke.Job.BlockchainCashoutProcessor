@@ -11,9 +11,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Contract
     [MessagePackObject(keyAsPropertyName: true)]
     public class BatchedCashout
     {
+        /// <summary>
+        /// Cashout operation ID
+        /// </summary>
         public Guid OperationId { get; set; }
+
+        /// <summary>
+        /// Cashout client ID
+        /// </summary>
         public Guid ClientId { get; set; }
+
+        /// <summary>
+        /// Destination address
+        /// </summary>
         public string ToAddress { get; set; }
+
+        /// <summary>
+        /// Cashout amount 
+        /// </summary>
         public decimal Amount { get; set; }
     }
 }

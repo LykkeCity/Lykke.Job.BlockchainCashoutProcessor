@@ -10,7 +10,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
         public string Version { get; }
         
         public DateTime StartMoment { get; }
-        public DateTime? SuspendMoment { get; private set; }
+        public DateTime? LastCashoutAdditionMoment { get; private set; }
+        public DateTime? ExpirationMoment { get; private set; }
+        public DateTime? ClosingMoment { get; private set; }
+        public DateTime? IdRevocationMoment { get; private set; }
         public DateTime? FinishMoment { get; private set; }
 
         public Guid BatchId { get; }
@@ -20,18 +23,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
         public string HotWalletAddress { get; }
         public int CountThreshold { get; }
         public TimeSpan AgeThreshold { get; }
-        
         public ISet<BatchedCashoutValueType> Cashouts { get; }
        
-        public CashoutBatchState State { get; private set; }
-        public string TransactionHash { get; private set; }
-        public IReadOnlyCollection<BatchedCashoutValueType> TransactionOutputs { get; private set; }
-        public decimal TransactionFee { get; private set; }
-        public long TransactionBlock { get; private set; }
-        public CashoutBatchClosingReason ClosingReason { get; private set; }
+        public CashoutsBatchState State { get; private set; }
+        public CashoutsBatchClosingReason ClosingReason { get; private set; }
 
-        public bool IsStillFilledUp => State == CashoutBatchState.FillingUp;
-        public bool IsExpired => DateTime.UtcNow - StartMoment > AgeThreshold;
+        public bool IsStillFillingUp => State == CashoutsBatchState.FillingUp;
+        public bool HaveToBeExpired => DateTime.UtcNow - StartMoment > AgeThreshold;
         
         private CashoutsBatchAggregate(
             Guid batchId,
@@ -57,7 +55,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             Cashouts = cashouts;
         }      
 
-        public static CashoutsBatchAggregate StartNew(
+        public static CashoutsBatchAggregate Start(
             Guid batchId,
             string blockchainType,
             string assetId,
@@ -80,29 +78,28 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 cashouts: new HashSet<BatchedCashoutValueType>()
             )
             {
-                State = CashoutBatchState.FillingUp
+                State = CashoutsBatchState.FillingUp
             };
         }
 
         public static CashoutsBatchAggregate Restore(
             string version,
-            CashoutBatchState state,
             DateTime startMoment,
-            DateTime? suspendToment,
+            DateTime? lastCashoutAdditionMoment,
+            DateTime? expirationMoment,
+            DateTime? closingMoment,
+            DateTime? idRevocationMoment,
             DateTime? finishMoment,
             Guid batchId,
             string blockchainType,
             string assetId,
             string blockchainAssetId,
-            ISet<BatchedCashoutValueType> cashouts,
             string hotWalletAddress,
             int countThreshold,
             TimeSpan ageThreshold,
-            string transactionHash,
-            IReadOnlyCollection<BatchedCashoutValueType> transactionOutputs,
-            decimal transactionFee,
-            long transactionBlock,
-            CashoutBatchClosingReason closingReason)
+            ISet<BatchedCashoutValueType> cashouts,
+            CashoutsBatchState state,
+            CashoutsBatchClosingReason closingReason)
         {
             return new CashoutsBatchAggregate
             (
@@ -118,13 +115,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 cashouts: cashouts
             )
             {
-                State = state,
-                SuspendMoment = suspendToment,
+                LastCashoutAdditionMoment = lastCashoutAdditionMoment,
+                ExpirationMoment = expirationMoment,
+                ClosingMoment = closingMoment,
+                IdRevocationMoment = idRevocationMoment,
                 FinishMoment = finishMoment,
-                TransactionHash = transactionHash,
-                TransactionOutputs = transactionOutputs,
-                TransactionFee = transactionFee,
-                TransactionBlock = transactionBlock,
+                State = state,
                 ClosingReason = closingReason
             };
         }
@@ -136,7 +132,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 
         public TransitionResult AddCashout(Guid cashoutId, Guid clientId, string toAddress, decimal amount)
         {
-            switch (SwitchState(CashoutBatchState.FillingUp, CashoutBatchState.FillingUp))
+            switch (SwitchState(CashoutsBatchState.FillingUp, CashoutsBatchState.FillingUp))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
@@ -154,12 +150,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 return TransitionResult.AlreadyInTargetState;
             }
 
+            LastCashoutAdditionMoment = DateTime.UtcNow;
+
             return TransitionResult.Switched;
         }
-        
+
         public TransitionResult Expire()
         {
-            switch (SwitchState(CashoutBatchState.FillingUp, CashoutBatchState.Expired))
+            switch (SwitchState(CashoutsBatchState.FillingUp, CashoutsBatchState.Expired))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
@@ -168,18 +166,20 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                     return TransitionResult.AlreadyInTargetState;
             }
 
+            ExpirationMoment = DateTime.UtcNow;
+
             return TransitionResult.Switched;
         }
 
-        public TransitionResult Close(CashoutBatchClosingReason reason)
+        public TransitionResult Close(CashoutsBatchClosingReason reason)
         {
             var expectedStates = new[]
             {
-                CashoutBatchState.FillingUp,
-                CashoutBatchState.Expired
+                CashoutsBatchState.FillingUp,
+                CashoutsBatchState.Expired
             };
 
-            switch (SwitchState(expectedStates, CashoutBatchState.Closed))
+            switch (SwitchState(expectedStates, CashoutsBatchState.Closed))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
@@ -189,13 +189,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             }
 
             ClosingReason = reason;
+            ClosingMoment = DateTime.UtcNow;
             
             return TransitionResult.Switched;
         }
 
         public async Task<TransitionResult> RevokeIdAsync(IActiveCashoutsBatchIdRepository activeCashoutsBatchIdRepository)
         {
-            switch (SwitchState(CashoutBatchState.Closed, CashoutBatchState.IdRevoked))
+            switch (SwitchState(CashoutsBatchState.Closed, CashoutsBatchState.IdRevoked))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
@@ -212,12 +213,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 BatchId
             );
 
+            IdRevocationMoment = DateTime.UtcNow;
+
             return TransitionResult.Switched;
         }
 
         public TransitionResult Complete()
         {
-            switch (SwitchState(CashoutBatchState.IdRevoked, CashoutBatchState.Finished))
+            switch (SwitchState(CashoutsBatchState.IdRevoked, CashoutsBatchState.Finished))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
@@ -225,13 +228,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 case TransitionResult.AlreadyInTargetState:
                     return TransitionResult.AlreadyInTargetState;
             }
+
+            FinishMoment = DateTime.UtcNow;
 
             return TransitionResult.Switched;
         }
 
         public TransitionResult Fail()
         {
-            switch (SwitchState(CashoutBatchState.IdRevoked, CashoutBatchState.Finished))
+            switch (SwitchState(CashoutsBatchState.IdRevoked, CashoutsBatchState.Finished))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
@@ -240,15 +245,17 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                     return TransitionResult.AlreadyInTargetState;
             }
 
+            FinishMoment = DateTime.UtcNow;
+
             return TransitionResult.Switched;
         }
 
-        private TransitionResult SwitchState(CashoutBatchState expectedState, CashoutBatchState nextState)
+        private TransitionResult SwitchState(CashoutsBatchState expectedState, CashoutsBatchState nextState)
         {
             return SwitchState(new[] { expectedState }, nextState);
         }
 
-        private TransitionResult SwitchState(ICollection<CashoutBatchState> expectedStates, CashoutBatchState nextState)
+        private TransitionResult SwitchState(ICollection<CashoutsBatchState> expectedStates, CashoutsBatchState nextState)
         {
             if (expectedStates.Contains(State))
             {

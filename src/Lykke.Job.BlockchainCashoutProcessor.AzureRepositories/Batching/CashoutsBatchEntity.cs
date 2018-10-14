@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Common;
 using JetBrains.Annotations;
 using Lykke.AzureStorage.Tables;
 using Lykke.AzureStorage.Tables.Entity.Annotation;
@@ -13,34 +12,23 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
     {
         #region Fields
 
-        public DateTime StartedAt { get; set; }
-
-        public DateTime? SuspendedAt { get; set; }
-
-        public DateTime? FinishedAt { get; set; }
-
+        public DateTime StartMoment { get; set; }
+        public DateTime? LastCashoutAdditionMoment { get; set; }
+        public DateTime? ExpirationMoment { get; set; }
+        public DateTime? ClosingMoment { get; set; }
+        public DateTime? IdRevocationMoment { get; set; }
+        public DateTime? FinishMoment { get; set; }
         public Guid BatchId { get; set; }
-
         public string BlockchainType { get; set; }
-
+        public string AssetId { get; set; }
         public string BlockchainAssetId { get; set; }
-
-        public bool IncludeFee { get; set; }
-
-        public CashoutBatchState State { get; set; }
-
+        public string HotWalletAddress { get; set; }
+        public int CountThreshold { get; set; }
+        public TimeSpan AgeThreshold { get; set; }
         [JsonValueSerializer]
         public BatchedCashoutEntity[] Cashouts { get; set; }
-
-        public string HotWalletAddress { get; set; }
-
-        public string TransactionHash { get; set; }
-
-        public OperationOutputEntity[] TransactionOutputs { get; set; }
-
-        public decimal TransactionFee { get; set; }
-
-        public long TransactionBlock { get; set; }
+        public CashoutsBatchState State { get; set; }
+        public CashoutsBatchClosingReason ClosingReason { get; set; }
 
         #endregion
         
@@ -49,15 +37,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 
         public static string GetPartitionKey(Guid operationId)
         {
-            // Use hash to distribute all records to the different partitions
-            var hash = operationId.ToString().CalculateHexHash32(3);
-
-            return $"{hash}";
+            return $"{operationId:D}";
         }
 
         public static string GetRowKey(Guid operationId)
         {
-            return $"{operationId:D}";
+            return "aggregate";
         }
 
         #endregion
@@ -72,24 +57,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
                 ETag = string.IsNullOrEmpty(aggregate.Version) ? "*" : aggregate.Version,
                 PartitionKey = GetPartitionKey(aggregate.BatchId),
                 RowKey = GetRowKey(aggregate.BatchId),
-                State = aggregate.State,
-                StartedAt = aggregate.StartMoment,
-                SuspendedAt = aggregate.SuspendMoment,
-                FinishedAt = aggregate.FinishMoment,
-                BlockchainAssetId = aggregate.BlockchainAssetId,
-                BlockchainType = aggregate.BlockchainType,
-                IncludeFee = aggregate.IncludeFee,
+                StartMoment = aggregate.StartMoment,
+                LastCashoutAdditionMoment = aggregate.LastCashoutAdditionMoment,
+                ExpirationMoment = aggregate.ExpirationMoment,
+                ClosingMoment = aggregate.ClosingMoment,
+                IdRevocationMoment = aggregate.IdRevocationMoment,
+                FinishMoment = aggregate.FinishMoment,
                 BatchId = aggregate.BatchId,
+                BlockchainType = aggregate.BlockchainType,
+                AssetId = aggregate.AssetId,
+                BlockchainAssetId = aggregate.BlockchainAssetId,
+                HotWalletAddress = aggregate.HotWalletAddress,
+                CountThreshold = aggregate.CountThreshold,
+                AgeThreshold = aggregate.AgeThreshold,
                 Cashouts = aggregate.Cashouts
                     .Select(BatchedCashoutEntity.FromDomain)
                     .ToArray(),
-                HotWalletAddress = aggregate.HotWalletAddress,
-                TransactionHash = aggregate.TransactionHash,
-                TransactionOutputs = aggregate.TransactionOutputs
-                    .Select(OperationOutputEntity.FromDomain)
-                    .ToArray(),
-                TransactionFee = aggregate.TransactionFee,
-                TransactionBlock = aggregate.TransactionBlock
+                State = aggregate.State,
+                ClosingReason = aggregate.ClosingReason
             };
         }
 
@@ -97,24 +82,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
         {
             return CashoutsBatchAggregate.Restore(
                 ETag,
-                State,
-                StartedAt,
-                SuspendedAt,
-                FinishedAt,
+                StartMoment,
+                LastCashoutAdditionMoment,
+                ExpirationMoment,
+                ClosingMoment,
+                IdRevocationMoment,
+                FinishMoment,
                 BatchId,
                 BlockchainType,
+                AssetId,
                 BlockchainAssetId,
-                IncludeFee,
+                HotWalletAddress,
+                CountThreshold,
+                AgeThreshold,
                 Cashouts
                     .Select(x => x.ToDomain())
-                    .ToArray(),
-                HotWalletAddress,
-                TransactionHash,
-                TransactionOutputs
-                    .Select(x => x.ToDomain())
-                    .ToArray(),
-                TransactionFee,
-                TransactionBlock);
+                    .ToHashSet(),
+                State,
+                ClosingReason);
         }
 
         #endregion

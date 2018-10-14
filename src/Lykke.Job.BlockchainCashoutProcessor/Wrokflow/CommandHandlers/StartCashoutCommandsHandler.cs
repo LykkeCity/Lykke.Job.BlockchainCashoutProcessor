@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
+using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
@@ -10,8 +11,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.StateMachine;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
 using Lykke.Service.Assets.Client;
 using Lykke.Service.Assets.Client.Models;
@@ -33,7 +33,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         private readonly bool _disableDirectCrossClientCashouts;
 
         public StartCashoutCommandsHandler(
-            ILog log,
+            ILogFactory logFactory,
             IChaosKitty chaosKitty,
             ICashoutsBatchRepository cashoutsBatchRepository,
             IActiveCashoutsBatchIdRepository activeCashoutsBatchIdRepository,
@@ -43,12 +43,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             CqrsSettings cqrsSettings,
             bool disableDirectCrossClientCashouts)
         {
-            if (log == null)
-            {
-                throw new ArgumentNullException(nameof(log));
-            }
-
-            _log = log.CreateComponentScope(nameof(StartCashoutCommandsHandler));
+            _log = logFactory.CreateLog(this);
             _chaosKitty = chaosKitty;
             _cashoutsBatchRepository = cashoutsBatchRepository;
             _activeCashoutsBatchIdRepository = activeCashoutsBatchIdRepository;
@@ -83,17 +78,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             if (blockchainConfiguration.AreCashoutsDisabled)
             {
-                _log.WriteWarning(nameof(StartCashoutCommand), command, $"Cashouts for {asset.BlockchainIntegrationLayerId} are disabled");
+                _log.Warning(
+                    $"Cashouts for {asset.BlockchainIntegrationLayerId} are disabled",
+                    context: command);
 
                 return CommandHandlingResult.Fail(TimeSpan.FromMinutes(10));
             }
 
             var recipientClientId = _disableDirectCrossClientCashouts
                 ? null
-                : await _walletsClient.TryGetClientIdAsync(
-                    asset.BlockchainIntegrationLayerId,
-                    asset.BlockchainIntegrationLayerAssetId,
-                    command.ToAddress);
+                : await _walletsClient.TryGetClientIdAsync(asset.BlockchainIntegrationLayerId, command.ToAddress);
 
             if (recipientClientId.HasValue)
             {
@@ -115,7 +109,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                     publisher,
                     asset,
                     blockchainConfiguration,
-                    blockchainConfiguration.CashoutAggregation
+                    blockchainConfiguration.CashoutsAggregation
                 );
             }
 
@@ -133,7 +127,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             IEventPublisher publisher, 
             Asset asset,
             BlockchainConfiguration blockchainConfiguration,
-            CashoutAggregationConfiguration aggregationConfiguration)
+            CashoutsAggregationConfiguration aggregationConfiguration)
         {
             var blockchainType = asset.BlockchainIntegrationLayerId;
             var blockchainAssetId = asset.BlockchainIntegrationLayerAssetId;
@@ -151,7 +145,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             var batch = await _cashoutsBatchRepository.GetOrAddAsync
             (
                 activeCashoutBatchId.BatchId,
-                () => CashoutsBatchAggregate.StartNew
+                () => CashoutsBatchAggregate.Start
                 (
                     activeCashoutBatchId.BatchId,
                     blockchainType,
@@ -165,7 +159,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             _chaosKitty.Meow(command.OperationId);
             
-            if (!batch.IsStillFilledUp)
+            if (!batch.IsStillFillingUp)
             {
                 return CommandHandlingResult.Fail(_cqrsSettings.RetryDelay);
             }
@@ -194,6 +188,24 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                         BatchId = batch.BatchId,
                         CashoutsCount = batch.Cashouts.Count,
                         CashoutsCountThreshold = batch.CountThreshold
+                    }
+                );
+
+                _chaosKitty.Meow(command.OperationId);
+
+                publisher.PublishEvent
+                (
+                    new BatchedCashoutStartedEvent
+                    {
+                        BatchId = batch.BatchId,
+                        OperationId = command.OperationId,
+                        BlockchainType = batch.BlockchainType,
+                        BlockchainAssetId = batch.BlockchainAssetId,
+                        AssetId = batch.AssetId,
+                        HotWalletAddress = batch.HotWalletAddress,
+                        ToAddress = command.ToAddress,
+                        Amount = command.Amount,
+                        ClientId = command.ClientId
                     }
                 );
 
@@ -240,7 +252,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
                 HotWalletAddress = blockchainConfiguration.HotWalletAddress,
                 AssetId = command.AssetId,
                 Amount = command.Amount,
-                FromClientId = command.ClientId,
+                ClientId = command.ClientId,
                 RecipientClientId = recipientClientId
             });
 

@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AsyncFriendlyStackTrace;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using AzureStorage.Tables;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
+using Lykke.Common.Log;
+using Lykke.Job.BlockchainCashoutProcessor.AppServices.Lifecycle;
 using Lykke.Job.BlockchainCashoutProcessor.Modules;
 using Lykke.Job.BlockchainCashoutProcessor.Settings;
 using Lykke.Logs;
-using Lykke.Logs.Slack;
+using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.SettingsReader;
-using Lykke.SlackNotification.AzureQueue;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +27,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor
         private IContainer ApplicationContainer { get; set; }
         private IConfigurationRoot Configuration { get; }
         private ILog Log { get; set; }
+        private IHealthNotifier HealthNotifier { get; set; }
 
         public Startup(IHostingEnvironment env)
         {
@@ -54,7 +55,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     options.DefaultLykkeConfiguration("v1", "BlockchainCashoutProcessor API");
                 });
 
-                var builder = new ContainerBuilder();
                 var appSettings = Configuration.LoadSettings<AppSettings>(options =>
                 {
                     options.SetConnString(x => x.SlackNotifications.AzureQueue.ConnectionString);
@@ -62,35 +62,60 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     options.SenderName = "Lykke.Job.BlockchainCashoutProcessor";
                 });
 
-                Log = CreateLogWithSlack(services, appSettings);
+                services.AddLykkeLogging(
+                    appSettings.Nested(x => x.BlockchainCashoutProcessorJob.Db.LogsConnString),
+                    "BlockchainCashoutProcessorLog",
+                    appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
+                    appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName,
+                    options =>
+                    {
+                        options.AddAdditionalSlackChannel(
+                            "CommonBlockChainIntegration",
+                            slackOptions =>
+                            {
+                                slackOptions.MinLogLevel = Microsoft.Extensions.Logging.LogLevel.Information;
+                                slackOptions.IncludeHealthNotifications();
+                                slackOptions.SpamGuard.DisableGuarding();
+                            });
+
+                        options.AddAdditionalSlackChannel(
+                            "CommonBlockChainIntegrationImportantMessages",
+                            slackOptions =>
+                            {
+                                slackOptions.MinLogLevel = Microsoft.Extensions.Logging.LogLevel.Warning;
+                                slackOptions.IncludeHealthNotifications();
+                                slackOptions.SpamGuard.DisableGuarding();
+                            });
+                    });
+
+                var builder = new ContainerBuilder();
 
                 builder.RegisterModule(new JobModule(
                     appSettings.CurrentValue.Assets, 
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.ChaosKitty,
-                    appSettings.CurrentValue.MatchingEngineClient,
-                    Log));
+                    appSettings.CurrentValue.MatchingEngineClient));
                 builder.RegisterModule(new RepositoriesModule(
-                    appSettings.Nested(x => x.BlockchainCashoutProcessorJob.Db),
-                    Log));
+                    appSettings.Nested(x => x.BlockchainCashoutProcessorJob.Db)));
                 builder.RegisterModule(new BlockchainsModule(
-                    Log, 
                     appSettings.CurrentValue.BlockchainsIntegration,
-                    appSettings.CurrentValue.BlockchainWalletsServiceClient,
-                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.BatchMonitoring));
+                    appSettings.CurrentValue.BlockchainWalletsServiceClient));
                 builder.RegisterModule(new CqrsModule(
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Cqrs,
-                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.Workflow,
-                    Log));
+                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.Workflow, 
+                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.Batching));
 
                 builder.Populate(services);
 
                 ApplicationContainer = builder.Build();
 
+                Log = ApplicationContainer.Resolve<ILogFactory>().CreateLog(this);
+                HealthNotifier = ApplicationContainer.Resolve<IHealthNotifier>();
+
                 return new AutofacServiceProvider(ApplicationContainer);
             }
             catch (Exception ex)
             {
-                Log?.WriteFatalErrorAsync(nameof(Startup), nameof(ConfigureServices), "", ex).GetAwaiter().GetResult();
+                Log?.Critical(ex);
                 throw;
             }
         }
@@ -105,7 +130,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     app.UseDeveloperExceptionPage();
                 }
 
-                app.UseLykkeMiddleware("BlockchainCashoutProcessor", ex => ErrorResponse.Create("Technical problem"));
+                app.UseLykkeMiddleware(ex => ErrorResponse.Create(ex.ToAsyncString()));
 
                 app.UseMvc();
                 app.UseSwagger(c =>
@@ -121,11 +146,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor
 
                 appLifetime.ApplicationStarted.Register(() => StartApplication().GetAwaiter().GetResult());
                 appLifetime.ApplicationStopping.Register(() => StopApplication().GetAwaiter().GetResult());
-                appLifetime.ApplicationStopped.Register(() => CleanUp().GetAwaiter().GetResult());
+                appLifetime.ApplicationStopped.Register(CleanUp);
             }
             catch (Exception ex)
             {
-                Log?.WriteFatalErrorAsync(nameof(Startup), nameof(Configure), "", ex).GetAwaiter().GetResult();
+                Log?.Critical(ex);
                 throw;
             }
         }
@@ -137,11 +162,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                 // NOTE: Job not yet recieve and process IsAlive requests here
 
                 await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
-                await Log.WriteMonitorAsync("", Program.EnvInfo, "Started");
+
+                HealthNotifier?.Notify("Started");
             }
             catch (Exception ex)
             {
-                await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StartApplication), "", ex);
+                Log?.Critical(ex);
                 throw;
             }
         }
@@ -156,100 +182,26 @@ namespace Lykke.Job.BlockchainCashoutProcessor
             }
             catch (Exception ex)
             {
-                if (Log != null)
-                {
-                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StopApplication), "", ex);
-                }
+                Log?.Critical(ex);
                 throw;
             }
         }
 
-        private async Task CleanUp()
+        private void CleanUp()
         {
             try
             {
                 // NOTE: Job can't recieve and process IsAlive requests here, so you can destroy all resources
                 
-                if (Log != null)
-                {
-                    await Log.WriteMonitorAsync("", Program.EnvInfo, "Terminating");
-                }
+                HealthNotifier?.Notify("Terminating");
                 
                 ApplicationContainer.Dispose();
             }
             catch (Exception ex)
             {
-                if (Log != null)
-                {
-                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(CleanUp), "", ex);
-                    (Log as IDisposable)?.Dispose();
-                }
+                Log?.Critical(ex);
                 throw;
             }
-        }
-
-        private static ILog CreateLogWithSlack(IServiceCollection services, IReloadingManager<AppSettings> settings)
-        {
-            var consoleLogger = new LogToConsole();
-            var aggregateLogger = new AggregateLogger();
-
-            aggregateLogger.AddLog(consoleLogger);
-
-            var dbLogConnectionStringManager = settings.Nested(x => x.BlockchainCashoutProcessorJob.Db.LogsConnString);
-            var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
-
-            if (string.IsNullOrEmpty(dbLogConnectionString))
-            {
-                consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
-                return aggregateLogger;
-            }
-
-            if (dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}"))
-                throw new InvalidOperationException($"LogsConnString {dbLogConnectionString} is not filled in settings");
-
-            var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
-                AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "BlockchainCashoutProcessorLog", consoleLogger),
-                consoleLogger);
-
-            // Creating slack notification service, which logs own azure queue processing messages to aggregate log
-            var slackService = services.UseSlackNotificationsSenderViaAzureQueue(new AzureQueueIntegration.AzureQueueSettings
-            {
-                ConnectionString = settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-                QueueName = settings.CurrentValue.SlackNotifications.AzureQueue.QueueName
-            }, aggregateLogger);
-
-            var slackNotificationsManager = new LykkeLogToAzureSlackNotificationsManager(slackService, consoleLogger);
-
-            // Creating azure storage logger, which logs own messages to concole log
-            var azureStorageLogger = new LykkeLogToAzureStorage(
-                persistenceManager,
-                slackNotificationsManager,
-                consoleLogger);
-
-            azureStorageLogger.Start();
-
-            aggregateLogger.AddLog(azureStorageLogger);
-
-            var allMessagesSlackLogger = LykkeLogToSlack.Create
-            (
-                slackService,
-                "CommonBlockChainIntegration",
-                // ReSharper disable once RedundantArgumentDefaultValue
-                LogLevel.All
-            );
-
-            aggregateLogger.AddLog(allMessagesSlackLogger);
-
-            var importantMessagesSlackLogger = LykkeLogToSlack.Create
-            (
-                slackService,
-                "CommonBlockChainIntegrationImportantMessages",
-                LogLevel.All ^ LogLevel.Info
-            );
-
-            aggregateLogger.AddLog(importantMessagesSlackLogger);
-
-            return aggregateLogger;
         }
     }
 }

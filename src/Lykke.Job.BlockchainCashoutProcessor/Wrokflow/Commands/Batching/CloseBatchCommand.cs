@@ -8,6 +8,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batching
     public class CloseBatchCommand
     {
         public Guid BatchId { get; set; }
-        public CashoutBatchClosingReason Reason { get; set; }
+        public CashoutsBatchClosingReason Reason { get; set; }
     }
 }

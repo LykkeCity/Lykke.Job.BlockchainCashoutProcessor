@@ -5,34 +5,25 @@ using MessagePack;
 namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
 {
     /// <summary>
-    /// This event is published, when batch of the cashouts is successfully completed. This event could include one or more user cashouts,
-    /// it depends on cashout parameters of the blockchain integration configuration and capabilities. If blockchain integration doesn't support
-    /// cashouts batching, then <see cref="CashoutCompletedEvent"/> will be published for each completed cashout.
+    /// This event is published, when the client's withdrawal of the funds to an external blockchain
+    /// address is completed and withdrawals aggregation is enabled for the integration
     /// </summary>
+    /// <remarks>
+    /// There are three kind of withdrawals and each kind has its own event to indicate a completion:
+    /// 1. Withdrawal to the external address without aggregation - <see cref="CashoutCompletedEvent"/>
+    /// 2. Withdrawal to the external address with aggregation - <see cref="CashoutsBatchCompletedEvent"/>
+    /// 3. Withdrawal to the deposit address of the another Lykke user - <see cref="CrossClientCashoutCompletedEvent"/>.
+    /// </remarks>
     [PublicAPI]
     [MessagePackObject(keyAsPropertyName:true)]
     public class CashoutsBatchCompletedEvent
     {
-        /// <summary>
-        /// Cashouts batch id. In general it's not the same as operation id that was used to start the cashout,
-        /// to obtain operation ids, see <see cref="Cashouts"/>
-        /// </summary>
         public Guid BatchId { get; set; }
-
-        /// <summary>
-        /// Lykke asset ID
-        /// </summary>
         public string AssetId { get; set; }
-        
-        /// <summary>
-        /// Blockchain transaction hash. Could be dummy "0x" if cashout is executed without blockchain transaction.
-        /// This could be cross-client cashout, when client A withdrawing funds to the deposit wallet of the client B
-        /// </summary>
         public string TransactionHash { get; set; }
-
-        /// <summary>
-        /// Cashouts that were completed
-        /// </summary>
-        public BatchedCashout[] Cashouts { get; set; }
+        public decimal TransactionFee { get; set; }
+        public BatchedCashout[] Cashouts { get; set; }       
+        public DateTime StartMoment { get; set; }
+        public DateTime FinishMoment { get; set; }
     }
 }
