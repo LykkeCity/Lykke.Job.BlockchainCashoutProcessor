@@ -49,6 +49,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder.Register(context => new AutofacDependencyResolver(context)).As<IDependencyResolver>().SingleInstance();
+            builder.RegisterInstance(_settings);
 
             // Sagas
             builder.RegisterType<CashoutSaga>();
