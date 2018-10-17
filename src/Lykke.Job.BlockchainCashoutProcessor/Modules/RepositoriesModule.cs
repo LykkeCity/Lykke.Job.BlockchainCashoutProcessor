@@ -29,6 +29,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             builder.Register(c => CashoutsBatchRepository.Create(_dbSettings.Nested(x => x.DataConnString), c.Resolve<ILogFactory>()))
                 .As<ICashoutsBatchRepository>()
+                .As<ICashoutsBatchReadOnlyRepository>()
                 .SingleInstance();
 
             builder.Register(c => CrossClientCashoutRepository.Create(_dbSettings.Nested(x => x.DataConnString), c.Resolve<ILogFactory>()))
