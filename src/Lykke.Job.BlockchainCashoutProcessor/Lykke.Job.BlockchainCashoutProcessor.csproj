@@ -22,7 +22,7 @@
     <!-- #if azurequeuesub -->
     <!-- #endif -->
     <PackageReference Include="Lykke.Logs" Version="5.2.0" />
-    <PackageReference Include="Lykke.Messaging" Version="6.0.1" />
+    <PackageReference Include="Lykke.Messaging" Version="6.2.0" />
     <PackageReference Include="Lykke.MatchingEngineConnector" Version="7.4.0" />
     <PackageReference Include="Lykke.Messaging.RabbitMq" Version="2.1.0" />
     <!-- #if rabbitpub -->
@@ -44,6 +44,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.1" />
+    <PackageReference Include="protobuf-net" Version="2.4.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.AzureRepositories\Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.csproj" />
