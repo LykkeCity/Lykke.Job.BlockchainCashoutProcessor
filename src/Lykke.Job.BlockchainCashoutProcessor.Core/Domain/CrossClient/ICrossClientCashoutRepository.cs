@@ -8,6 +8,5 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient
         Task<CrossClientCashoutAggregate> GetOrAddAsync(Guid operationId, Func<CrossClientCashoutAggregate> newAggregateFactory);
         Task<CrossClientCashoutAggregate> GetAsync(Guid operationId);
         Task SaveAsync(CrossClientCashoutAggregate aggregate);
-        Task<CrossClientCashoutAggregate> TryGetAsync(Guid operationId);
     }
 }

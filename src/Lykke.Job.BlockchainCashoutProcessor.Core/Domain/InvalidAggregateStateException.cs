@@ -7,12 +7,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain
         public InvalidAggregateStateException(object currentState, object expectedState, object targetState) :
             base(BuildMessage(currentState, expectedState, targetState))
         {
-
         }
 
         private static string BuildMessage(object currentState, object expectedState, object targetState)
         {
-            return $"Cashout state can't be switched: {currentState} -> {targetState}. Waiting for the {expectedState} state.";
+            return $"Aggregate state can't be switched: {currentState} -> {targetState}. Waiting for the {expectedState} state.";
         }
     }
 }

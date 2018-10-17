@@ -19,5 +19,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings.Blockchain
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]
         [Optional]
         public bool AreCashoutsDisabled { get; set; }
+
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        [Optional]
+        public CashoutAggregationSettings CashoutAggregation { get; set; }
     }
 }

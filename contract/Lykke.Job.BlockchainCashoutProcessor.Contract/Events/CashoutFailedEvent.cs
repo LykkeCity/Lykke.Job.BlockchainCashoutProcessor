@@ -1,52 +1,30 @@
 ﻿using System;
+using JetBrains.Annotations;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
 {
     /// <summary>
-    /// Cashout process is failed
+    /// This event is published, when the client's withdrawal of the funds to an external blockchain
+    /// address is failed and withdrawals aggregation is disabled for the integration
     /// </summary>
+    /// <remarks>
+    /// There are two kind of withdrawals and each kind has its own event to indicate a failure:
+    /// 1. Withdrawal to the external address without aggregation - <see cref="CashoutFailedEvent"/>
+    /// 2. Withdrawal to the external address with aggregation - <see cref="CashoutsBatchFailedEvent"/>
+    /// There is no CrossClientCashoutFailedEvent because there it's always executing to completion.
+    /// </remarks>
+    [PublicAPI]
     [MessagePackObject(keyAsPropertyName: true)]
     public class CashoutFailedEvent
     {
-        /// <summary>
-        ///  Lykke unique asset ID
-        /// </summary>
         public string AssetId { get; set; }
-
-        /// <summary>
-        /// Amount
-        /// </summary>
         public decimal Amount { get; set; }
-
-        /// <summary>
-        /// Lykke unique client ID
-        /// </summary>
         public Guid ClientId { get; set; }
-
-        /// <summary>
-        /// Lykke unique operation ID
-        /// </summary>
         public Guid OperationId { get; set; }
-
-        /// <summary>
-        /// Error description
-        /// </summary>
         public string Error { get; set; }
-
-        /// <summary>
-        /// Error code
-        /// </summary>
         public CashoutErrorCode ErrorCode { get; set; }
-
-        /// <summary>
-        /// moment, when cashout was started
-        /// </summary>
         public DateTime StartMoment { get; set; }
-
-        /// <summary>
-        /// moment, when cashout was finished
-        /// </summary>
         public DateTime FinishMoment { get; set; }
     }
 }

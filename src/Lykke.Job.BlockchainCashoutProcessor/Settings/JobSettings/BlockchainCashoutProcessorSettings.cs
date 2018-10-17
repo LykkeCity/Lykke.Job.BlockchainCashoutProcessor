@@ -20,5 +20,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings
         [Optional]
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]
         public WorkflowSettings Workflow { get; set; }
+
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        public BatchingSettings Batching { get; set; }
     }
 }
