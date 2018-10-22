@@ -14,20 +14,23 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batching
     {
         private readonly IChaosKitty _chaosKitty;
         private readonly ICashoutsBatchRepository _cashoutsBatchRepository;
+        private readonly IClosedBatchedCashoutRepository _closedBatchedCashoutRepository;
 
         public CloseBatchCommandsHandler(
             IChaosKitty chaosKitty,
-            ICashoutsBatchRepository cashoutsBatchRepository)
+            ICashoutsBatchRepository cashoutsBatchRepository,
+            IClosedBatchedCashoutRepository closedBatchedCashoutRepository)
         {
             _chaosKitty = chaosKitty;
             _cashoutsBatchRepository = cashoutsBatchRepository;
+            _closedBatchedCashoutRepository = closedBatchedCashoutRepository;
         }
 
         [UsedImplicitly]
         public async Task<CommandHandlingResult> Handle(CloseBatchCommand command, IEventPublisher publisher)
         {
             var batch = await _cashoutsBatchRepository.GetAsync(command.BatchId);
-            var transitionResult = batch.Close(command.Reason);
+            var transitionResult = await batch.CloseAsync(command.Reason, _closedBatchedCashoutRepository);
 
             if (transitionResult.ShouldSaveAggregate())
             {
