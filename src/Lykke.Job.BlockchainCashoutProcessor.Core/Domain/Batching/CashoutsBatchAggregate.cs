@@ -26,7 +26,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
         public ISet<BatchedCashoutValueType> Cashouts { get; }
        
         public CashoutsBatchState State { get; private set; }
-        public CashoutsBatchClosingReason ClosingReason { get; private set; }
+        public CashoutsBatchClosingReason? ClosingReason { get; private set; }
 
         public bool IsStillFillingUp => State == CashoutsBatchState.FillingUp;
         public bool HaveToBeExpired => DateTime.UtcNow - StartMoment > AgeThreshold;
@@ -99,7 +99,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             TimeSpan ageThreshold,
             ISet<BatchedCashoutValueType> cashouts,
             CashoutsBatchState state,
-            CashoutsBatchClosingReason closingReason)
+            CashoutsBatchClosingReason? closingReason)
         {
             return new CashoutsBatchAggregate
             (
@@ -171,7 +171,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 
         public TransitionResult Expire()
         {
-            switch (SwitchState(CashoutsBatchState.Filled, CashoutsBatchState.Expired))
+            switch (SwitchState(CashoutsBatchState.FillingUp, CashoutsBatchState.Expired))
             {
                 case TransitionResult.AlreadyInFutureState:
                     return TransitionResult.AlreadyInFutureState;
