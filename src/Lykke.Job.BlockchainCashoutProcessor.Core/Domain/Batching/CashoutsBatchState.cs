@@ -3,6 +3,7 @@
     public enum CashoutsBatchState
     {
         FillingUp,
+        Filled,
         Expired,
         Closed,
         IdRevoked,

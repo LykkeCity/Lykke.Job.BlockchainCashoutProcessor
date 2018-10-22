@@ -39,7 +39,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     Self
                 );
             }
-            else if (evt.CashoutsCount > evt.CashoutsCountThreshold)
+            else if (evt.CashoutsCount >= evt.CashoutsCountThreshold)
             {
                 sender.SendCommand
                 (

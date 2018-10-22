@@ -25,6 +25,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
         private readonly ILog _log;
         private readonly IChaosKitty _chaosKitty;
         private readonly ICashoutsBatchRepository _cashoutsBatchRepository;
+        private readonly IClosedBatchedCashoutRepository _closedBatchedCashoutRepository;
         private readonly IActiveCashoutsBatchIdRepository _activeCashoutsBatchIdRepository;
         private readonly IBlockchainConfigurationsProvider _blockchainConfigurationProvider;
         private readonly IAssetsServiceWithCache _assetsService;
@@ -36,6 +37,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             ILogFactory logFactory,
             IChaosKitty chaosKitty,
             ICashoutsBatchRepository cashoutsBatchRepository,
+            IClosedBatchedCashoutRepository closedBatchedCashoutRepository,
             IActiveCashoutsBatchIdRepository activeCashoutsBatchIdRepository,
             IBlockchainConfigurationsProvider blockchainConfigurationProvider,
             IAssetsServiceWithCache assetsService,
@@ -46,6 +48,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             _log = logFactory.CreateLog(this);
             _chaosKitty = chaosKitty;
             _cashoutsBatchRepository = cashoutsBatchRepository;
+            _closedBatchedCashoutRepository = closedBatchedCashoutRepository;
             _activeCashoutsBatchIdRepository = activeCashoutsBatchIdRepository;
             _blockchainConfigurationProvider = blockchainConfigurationProvider ?? throw new ArgumentNullException(nameof(blockchainConfigurationProvider));
             _assetsService = assetsService ?? throw new ArgumentNullException(nameof(assetsService));
@@ -129,6 +132,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             BlockchainConfiguration blockchainConfiguration,
             CashoutsAggregationConfiguration aggregationConfiguration)
         {
+            if (await _closedBatchedCashoutRepository.IsCashoutClosedAsync(command.OperationId))
+            {
+                return CommandHandlingResult.Ok();
+            }
+
             var blockchainType = asset.BlockchainIntegrationLayerId;
             var blockchainAssetId = asset.BlockchainIntegrationLayerAssetId;
 
