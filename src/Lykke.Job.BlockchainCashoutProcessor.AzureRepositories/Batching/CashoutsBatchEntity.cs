@@ -28,7 +28,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
         [JsonValueSerializer]
         public BatchedCashoutEntity[] Cashouts { get; set; }
         public CashoutsBatchState State { get; set; }
-        public CashoutsBatchClosingReason ClosingReason { get; set; }
+        public CashoutsBatchClosingReason? ClosingReason { get; set; }
 
         #endregion
         
