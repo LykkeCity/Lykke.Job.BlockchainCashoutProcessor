@@ -140,7 +140,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(
                         typeof(CashoutStartedEvent),
                         typeof(CrossClientCashoutStartedEvent),
-                        typeof(CashoutAddedToBatchEvent),
+                        typeof(BatchFillingStartedEvent),
+                        typeof(BatchFilledEvent),
                         typeof(BatchedCashoutStartedEvent))
                     .With(defaultPipeline)
 
@@ -247,12 +248,17 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .With(defaultPipeline),
 
                  Register.Saga<BatchSaga>($"{Self}.batch-saga")
-                     .ListeningEvents(typeof(CashoutAddedToBatchEvent))
+                     .ListeningEvents(typeof(BatchFillingStartedEvent))
                      .From(Self)
                      .On(defaultRoute)
-                     .PublishingCommands(
-                         typeof(WaitForBatchExpirationCommand),
-                         typeof(CloseBatchCommand))
+                     .PublishingCommands(typeof(WaitForBatchExpirationCommand))
+                     .To(Self)
+                     .With(defaultPipeline)
+
+                     .ListeningEvents(typeof(BatchFilledEvent))
+                     .From(Self)
+                     .On(defaultRoute)
+                     .PublishingCommands(typeof(CloseBatchCommand))
                      .To(Self)
                      .With(defaultPipeline)
 

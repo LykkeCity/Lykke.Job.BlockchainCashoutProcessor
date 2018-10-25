@@ -32,6 +32,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batching
             var batch = await _cashoutsBatchRepository.GetAsync(command.BatchId);
             var transitionResult = await batch.CloseAsync(command.Reason, _closedBatchedCashoutRepository);
 
+            _chaosKitty.Meow(command.BatchId);
+
             if (transitionResult.ShouldSaveAggregate())
             {
                 await _cashoutsBatchRepository.SaveAsync(batch);

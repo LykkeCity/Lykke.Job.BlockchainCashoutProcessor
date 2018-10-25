@@ -189,15 +189,26 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             if (transitionResult.ShouldPublishEvents())
             {
-                publisher.PublishEvent
-                (
-                    new CashoutAddedToBatchEvent
-                    {
-                        BatchId = batch.BatchId,
-                        CashoutsCount = batch.Cashouts.Count,
-                        CashoutsCountThreshold = batch.CountThreshold
-                    }
-                );
+                if (batch.State == CashoutsBatchState.FillingUp && batch.Cashouts.Count == 1)
+                {
+                    publisher.PublishEvent
+                    (
+                        new BatchFillingStartedEvent
+                        {
+                            BatchId = batch.BatchId
+                        }
+                    );
+                }
+                else if(batch.State == CashoutsBatchState.Filled)
+                {
+                    publisher.PublishEvent
+                    (
+                        new BatchFilledEvent
+                        {
+                            BatchId = batch.BatchId
+                        }
+                    );
+                }
 
                 _chaosKitty.Meow(command.OperationId);
 

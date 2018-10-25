@@ -26,31 +26,34 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
 
         [UsedImplicitly]
-        private Task Handle(CashoutAddedToBatchEvent evt, ICommandSender sender)
+        private Task Handle(BatchFillingStartedEvent evt, ICommandSender sender)
         {
-            if (evt.CashoutsCount == 1)
-            {
-                sender.SendCommand
-                (
-                    new WaitForBatchExpirationCommand
-                    {
-                        BatchId = evt.BatchId
-                    },
-                    Self
-                );
-            }
-            else if (evt.CashoutsCount >= evt.CashoutsCountThreshold)
-            {
-                sender.SendCommand
-                (
-                    new CloseBatchCommand
-                    {
-                        BatchId = evt.BatchId,
-                        Reason = CashoutsBatchClosingReason.CashoutsCountExceeded
-                    },
-                    Self
-                );
-            }
+            sender.SendCommand
+            (
+                new WaitForBatchExpirationCommand
+                {
+                    BatchId = evt.BatchId
+                },
+                Self
+            );
+
+            _chaosKitty.Meow(evt.BatchId);
+
+            return Task.CompletedTask;
+        }
+
+        [UsedImplicitly]
+        private Task Handle(BatchFilledEvent evt, ICommandSender sender)
+        {
+            sender.SendCommand
+            (
+                new CloseBatchCommand
+                {
+                    BatchId = evt.BatchId,
+                    Reason = CashoutsBatchClosingReason.Filled
+                },
+                Self
+            );
 
             _chaosKitty.Meow(evt.BatchId);
 
