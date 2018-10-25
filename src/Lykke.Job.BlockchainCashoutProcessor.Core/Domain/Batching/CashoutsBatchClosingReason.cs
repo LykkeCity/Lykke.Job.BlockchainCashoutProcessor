@@ -3,6 +3,6 @@
     public enum CashoutsBatchClosingReason
     {
         Expired,
-        CashoutsCountExceeded
+        Filled
     }
 }

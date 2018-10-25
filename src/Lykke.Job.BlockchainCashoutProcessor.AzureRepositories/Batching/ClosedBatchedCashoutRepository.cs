@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using AzureStorage;
 using AzureStorage.Tables;
 using Lykke.Common.Log;
@@ -31,7 +32,27 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
 
         public Task EnsureClosedAsync(IEnumerable<Guid> processedCashoutIds)
         {
-            return _storage.InsertOrReplaceBatchAsync(processedCashoutIds.Select(ClosedBatchedCashoutEntity.FromDomain));
+            var persistEntityBlock = new ActionBlock<ClosedBatchedCashoutEntity>
+            (
+                entity => _storage.InsertOrReplaceAsync(entity),
+                new ExecutionDataflowBlockOptions
+                {
+                    EnsureOrdered = false,
+                    MaxDegreeOfParallelism = 8
+                }
+            );
+
+            foreach (var entity in processedCashoutIds.Select(ClosedBatchedCashoutEntity.FromDomain))
+            {
+                if (!persistEntityBlock.Post(entity))
+                {
+                    throw new InvalidOperationException("Can't post entity to the action block");
+                }
+            }
+
+            persistEntityBlock.Complete();
+
+            return persistEntityBlock.Completion;
         }
 
         public async Task<bool> IsCashoutClosedAsync(Guid cashoutId)
