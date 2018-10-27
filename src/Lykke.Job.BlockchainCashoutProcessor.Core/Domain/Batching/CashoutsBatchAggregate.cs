@@ -132,20 +132,27 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
 
         public TransitionResult AddCashout(Guid cashoutId, Guid clientId, string toAddress, decimal amount)
         {
-            switch (SwitchState(CashoutsBatchState.FillingUp, CashoutsBatchState.FillingUp))
-            {
-                case TransitionResult.AlreadyInFutureState:
-                    return TransitionResult.AlreadyInFutureState;
-
-                case TransitionResult.AlreadyInTargetState:
-                    return TransitionResult.AlreadyInTargetState;
-            }
-
             var oldCashoutsCount = Cashouts.Count;
 
             Cashouts.Add(new BatchedCashoutValueType(cashoutId, clientId, toAddress, amount));
 
-            if (Cashouts.Count >= CountThreshold)
+            if (Cashouts.Count < CountThreshold)
+            {
+                switch (SwitchState(CashoutsBatchState.FillingUp, CashoutsBatchState.FillingUp))
+                {
+                    case TransitionResult.AlreadyInFutureState:
+                        return TransitionResult.AlreadyInFutureState;
+
+                    case TransitionResult.AlreadyInTargetState:
+                        return TransitionResult.AlreadyInTargetState;
+                }
+
+                if (oldCashoutsCount == Cashouts.Count)
+                {
+                    return TransitionResult.AlreadyInTargetState;
+                }
+            }
+            else
             {
                 switch (SwitchState(CashoutsBatchState.FillingUp, CashoutsBatchState.Filled))
                 {
@@ -155,13 +162,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                     case TransitionResult.AlreadyInTargetState:
                         return TransitionResult.AlreadyInTargetState;
                 }
-            }
-            else
-            {
-                if (oldCashoutsCount == Cashouts.Count)
-                {
-                    return TransitionResult.AlreadyInTargetState;
-                }    
             }
 
             LastCashoutAdditionMoment = DateTime.UtcNow;
