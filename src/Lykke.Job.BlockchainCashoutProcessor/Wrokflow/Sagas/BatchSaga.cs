@@ -107,7 +107,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     OperationId = batch.BatchId,
                     AssetId = batch.AssetId,
                     FromAddress = batch.HotWalletAddress,
-                    IncludeFee = true,
+                    // For the cashout all amount should be transfered to the destination address,
+                    // so the fee shouldn't be included in the amount.
+                    IncludeFee = false,
                     Outputs = batch.Cashouts
                         .Select(c => new BlockchainOperationsExecutor.Contract.OperationOutput
                         {
