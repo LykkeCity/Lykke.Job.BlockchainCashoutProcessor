@@ -1,36 +1,30 @@
 ﻿using System;
+using JetBrains.Annotations;
 using MessagePack;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Contract.Events
 {
-    [MessagePackObject]
+    /// <summary>
+    /// This event is published, when the client's withdrawal of the funds to an external blockchain
+    /// address is just started and withdrawals aggregation is disabled for the integration
+    /// </summary>
+    /// <remarks>
+    /// There are three kind of withdrawals and each kind has its own event to indicate a start:
+    /// 1. Withdrawal to the external address without aggregation - <see cref="CashoutStartedEvent"/>
+    /// 2. Withdrawal to the external address with aggregation - <see cref="BatchedCashoutStartedEvent"/>
+    /// 3. Withdrawal to the deposit address of the another Lykke user - <see cref="CrossClientCashoutStartedEvent"/>.
+    /// </remarks>
+    [PublicAPI]
+    [MessagePackObject(keyAsPropertyName: true)]
     public class CashoutStartedEvent
     {
-        [Key(0)]
         public Guid OperationId { get; set; }
-
-        [Key(1)]
         public string BlockchainType { get; set; }
-
-        [Key(2)]
         public string BlockchainAssetId { get; set; }
-
-        /// <summary>
-        /// Lykke asset ID.
-        /// </summary>
-        [Key(3)]
         public string AssetId { get; set; }
-
-        [Key(4)]
         public string HotWalletAddress { get; set; }
-
-        [Key(5)]
         public string ToAddress { get; set; }
-
-        [Key(6)]
         public decimal Amount { get; set; }
-
-        [Key(7)]
         public Guid ClientId { get; set; }
     }
 }

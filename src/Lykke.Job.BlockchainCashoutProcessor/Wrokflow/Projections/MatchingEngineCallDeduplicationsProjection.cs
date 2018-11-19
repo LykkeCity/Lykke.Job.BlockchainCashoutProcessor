@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CrossClient;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections
 {

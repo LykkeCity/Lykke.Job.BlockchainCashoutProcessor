@@ -1,13 +1,13 @@
 ﻿using System.Linq;
 using System.Net;
 using Lykke.Common.Api.Contract.Responses;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
+using Lykke.Job.BlockchainCashoutProcessor.AppServices.Health;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Controllers
 {
-    // NOTE: See https://lykkex.atlassian.net/wiki/spaces/LKEWALLET/pages/35755585/Add+your+app+to+Monitoring
+    // NOTE: See https://lykkex.atlassian.net/wiki/spaces/LKEWALLET/pages/35755585/Add+your+app+to+BatchMonitoring
     [Route("api/[controller]")]
     public class IsAliveController : Controller
     {

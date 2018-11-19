@@ -2,8 +2,8 @@
 using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables;
-using Common.Log;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.SettingsReader;
 
@@ -14,12 +14,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient
     {
         private readonly INoSQLTableStorage<CrossClientCashoutEntity> _storage;
 
-        public static ICrossClientCashoutRepository Create(IReloadingManager<string> connectionString, ILog log)
+        public static ICrossClientCashoutRepository Create(IReloadingManager<string> connectionString, ILogFactory logFactory)
         {
             var storage = AzureTableStorage<CrossClientCashoutEntity>.Create(
                 connectionString,
                 "CrossClientCashout",
-                log);
+                logFactory);
 
             return new CrossClientCashoutRepository(storage);
         }
@@ -59,7 +59,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient
             return aggregate;
         }
 
-        public async Task<CrossClientCashoutAggregate> TryGetAsync(Guid operationId)
+        private async Task<CrossClientCashoutAggregate> TryGetAsync(Guid operationId)
         {
             var partitionKey = CrossClientCashoutEntity.GetPartitionKey(operationId);
             var rowKey = CrossClientCashoutEntity.GetRowKey(operationId);

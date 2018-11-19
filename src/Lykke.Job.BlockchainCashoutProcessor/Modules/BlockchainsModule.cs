@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Autofac;
-using Common.Log;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Services.Blockchains;
-using Lykke.Job.BlockchainCashoutProcessor.Services.Blockchains;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Services;
+using Lykke.Job.BlockchainCashoutProcessor.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.Blockchain;
 using Lykke.Service.BlockchainWallets.Client;
 
@@ -12,16 +13,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 {
     public class BlockchainsModule : Module
     {
-        private readonly ILog _log;
         private readonly BlockchainsIntegrationSettings _blockchainsIntegrationSettings;
         private readonly BlockchainWalletsServiceClientSettings _blockchainWalletsServiceClientSettings;
 
         public BlockchainsModule(
-            ILog log,
             BlockchainsIntegrationSettings blockchainsIntegrationSettings,
             BlockchainWalletsServiceClientSettings blockchainWalletsServiceClientSettings)
         {
-            _log = log ?? throw new ArgumentNullException(nameof(log));
             _blockchainsIntegrationSettings = blockchainsIntegrationSettings ?? throw new ArgumentNullException(nameof(blockchainsIntegrationSettings));
             _blockchainWalletsServiceClientSettings = blockchainWalletsServiceClientSettings ?? throw new ArgumentNullException(nameof(blockchainWalletsServiceClientSettings));
         }
@@ -37,18 +35,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             foreach (var blockchain in _blockchainsIntegrationSettings.Blockchains.Where(b => !b.IsDisabled))
             {
-                _log.WriteInfo("Blockchains registration", "", 
-                    $"Registering blockchain: {blockchain.Type} -> \r\nHW: {blockchain.HotWalletAddress}");
-
-                if (blockchain.AreCashoutsDisabled)
-                {
-                    _log.WriteWarning("Blockchains registration", "", $"Cashouts for blockchain {blockchain.Type} are disabled");
-                }
-
                 var blockchainConfiguration = new BlockchainConfiguration
                 (
                     blockchain.HotWalletAddress,
-                    blockchain.AreCashoutsDisabled
+                    blockchain.AreCashoutsDisabled,
+                    blockchain.CashoutAggregation != null ? 
+                        new CashoutsAggregationConfiguration(
+                            blockchain.CashoutAggregation.AgeThreshold, 
+                            blockchain.CashoutAggregation.CountThreshold):
+                        null
                 );
 
                 blockchainConfigurations.Add(blockchain.Type, blockchainConfiguration);
