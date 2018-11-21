@@ -137,6 +137,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             if (oldCashoutsCount < CountThreshold)
             {
                 Cashouts.Add(cashout);
+
+                LastCashoutAdditionMoment = DateTime.UtcNow;
             }
 
             if (Cashouts.Count < CountThreshold)
@@ -165,11 +167,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                     case TransitionResult.AlreadyInTargetState:
                         return TransitionResult.AlreadyInTargetState;
                 }
-            }
-
-            if (oldCashoutsCount != Cashouts.Count)
-            {
-                LastCashoutAdditionMoment = DateTime.UtcNow;
             }
 
             return TransitionResult.Switched;
