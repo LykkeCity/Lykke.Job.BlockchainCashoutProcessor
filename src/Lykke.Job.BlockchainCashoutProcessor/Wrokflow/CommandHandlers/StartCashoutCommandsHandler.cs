@@ -166,19 +166,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
             );
 
             _chaosKitty.Meow(command.OperationId);
-            
-            if (!batch.IsStillFillingUp)
+
+            var cashout = new BatchedCashoutValueType(command.OperationId, command.ClientId, command.ToAddress, command.Amount);
+            var isCashoutShouldWaitForNextBatch = !(batch.IsStillFillingUp || batch.Cashouts.Contains(cashout));
+
+            if (isCashoutShouldWaitForNextBatch)
             {
                 return CommandHandlingResult.Fail(_cqrsSettings.RetryDelay);
             }
-            
-            var transitionResult = batch.AddCashout
-            (
-                command.OperationId,
-                command.ClientId,
-                command.ToAddress,
-                command.Amount
-            );
+
+            var transitionResult = batch.AddCashout(cashout);
 
             if (transitionResult.ShouldSaveAggregate())
             {

@@ -32,7 +32,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batching
         {
             var batch = await _cashoutsBatchRepository.GetAsync(command.BatchId);
 
-            if (!batch.HaveToBeExpired)
+            if (!batch.HaveToBeExpired && batch.IsStillFillingUp)
             {
                 return CommandHandlingResult.Fail(_batchExpirationMonitoringPeriod);
             }
