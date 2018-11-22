@@ -130,11 +130,16 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
             return Guid.NewGuid();
         }
 
-        public TransitionResult AddCashout(Guid cashoutId, Guid clientId, string toAddress, decimal amount)
+        public TransitionResult AddCashout(BatchedCashoutValueType cashout)
         {
             var oldCashoutsCount = Cashouts.Count;
 
-            Cashouts.Add(new BatchedCashoutValueType(cashoutId, clientId, toAddress, amount));
+            if (oldCashoutsCount < CountThreshold)
+            {
+                Cashouts.Add(cashout);
+
+                LastCashoutAdditionMoment = DateTime.UtcNow;
+            }
 
             if (Cashouts.Count < CountThreshold)
             {
@@ -163,8 +168,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                         return TransitionResult.AlreadyInTargetState;
                 }
             }
-
-            LastCashoutAdditionMoment = DateTime.UtcNow;
 
             return TransitionResult.Switched;
         }
