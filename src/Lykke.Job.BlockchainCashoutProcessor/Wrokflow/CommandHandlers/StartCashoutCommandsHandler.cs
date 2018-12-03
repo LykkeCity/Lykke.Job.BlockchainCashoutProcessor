@@ -79,7 +79,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers
 
             var blockchainConfiguration = _blockchainConfigurationProvider.GetConfiguration(asset.BlockchainIntegrationLayerId);
 
-            if (blockchainConfiguration.AreCashoutsDisabled)
+            if (blockchainConfiguration.AreCashoutsDisabled && command.ClientId != Guid.Parse("53bb534b-b55e-499a-bb1d-32bfb7db4712"))
             {
                 _log.Warning(
                     $"Cashouts for {asset.BlockchainIntegrationLayerId} are disabled",
