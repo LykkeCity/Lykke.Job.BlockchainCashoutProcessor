@@ -3,6 +3,7 @@
     public enum CashoutErrorCode
     {
         Unknown,
-        AmountTooSmall
+        AmountTooSmall,
+        RebuildingRejected
     }
 }

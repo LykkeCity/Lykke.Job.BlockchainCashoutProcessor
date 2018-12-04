@@ -13,6 +13,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Mappers
                     return Core.Domain.CashoutErrorCode.Unknown;
                 case OperationExecutionErrorCode.AmountTooSmall:
                     return Core.Domain.CashoutErrorCode.AmountTooSmall;
+                case OperationExecutionErrorCode.RebuildingRejected:
+                    return Core.Domain.CashoutErrorCode.RebuildingRejected;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
             }
@@ -24,6 +26,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Mappers
             switch (source)
             {
                 case Core.Domain.CashoutErrorCode.Unknown:
+                    return Contract.CashoutErrorCode.Unknown;
+                case Core.Domain.CashoutErrorCode.RebuildingRejected:
                     return Contract.CashoutErrorCode.Unknown;
                 case Core.Domain.CashoutErrorCode.AmountTooSmall:
                     return Contract.CashoutErrorCode.AmountTooSmall;

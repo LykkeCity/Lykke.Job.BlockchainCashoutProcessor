@@ -18,7 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.12.0" />
     <PackageReference Include="Lykke.Cqrs" Version="7.0.0" />
-    <PackageReference Include="Lykke.Job.BlockchainOperationsExecutor.Contract" Version="11.0.0" />
+    <PackageReference Include="Lykke.Job.BlockchainOperationsExecutor.Contract" Version="11.1.0" />
     <!-- #if azurequeuesub -->
     <!-- #endif -->
     <PackageReference Include="Lykke.Logs" Version="7.2.1" />
