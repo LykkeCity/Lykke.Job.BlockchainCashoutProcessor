@@ -15,6 +15,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.ContractMapping
 
                 case OperationExecutionErrorCode.AmountTooSmall:
                     return CashoutErrorCode.AmountTooSmall;
+                case OperationExecutionErrorCode.RebuildingRejected:
+                    return CashoutErrorCode.Unknown;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(source), source, null);
