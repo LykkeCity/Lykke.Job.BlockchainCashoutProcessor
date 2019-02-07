@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
@@ -7,6 +8,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
+using MoreLinq;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
@@ -18,7 +20,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         private readonly ICashoutsBatchReadOnlyRepository _cashoutsBatchRepository;
 
         public BatchSaga(
-            IChaosKitty chaosKitty, 
+            IChaosKitty chaosKitty,
             ICashoutsBatchReadOnlyRepository cashoutsBatchRepository)
         {
             _chaosKitty = chaosKitty;
@@ -96,9 +98,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
 
         [UsedImplicitly]
-        private async Task Handle(ActiveBatchIdRevokedEvent evt, ICommandSender sender)
+        public async Task Handle(ActiveBatchIdRevokedEvent evt, ICommandSender sender)
         {
             var batch = await _cashoutsBatchRepository.GetAsync(evt.BatchId);
+            var outputs = batch.Cashouts
+                .GroupBy(x => x.ToAddress)
+                .Select(x =>
+                {
+                    return new BlockchainOperationsExecutor.Contract.OperationOutput
+                    {
+                        Address = x.Key,
+                        Amount = x.Sum(y => y.Amount)
+                    };
+                }).ToArray();
 
             sender.SendCommand
             (
@@ -110,20 +122,14 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     // For the cashout all amount should be transfered to the destination address,
                     // so the fee shouldn't be included in the amount.
                     IncludeFee = false,
-                    Outputs = batch.Cashouts
-                        .Select(c => new BlockchainOperationsExecutor.Contract.OperationOutput
-                        {
-                            Address = c.ToAddress,
-                            Amount = c.Amount
-                        })
-                        .ToArray()
+                    Outputs = outputs
                 },
                 BlockchainOperationsExecutor.Contract.BlockchainOperationsExecutorBoundedContext.Name
             );
 
             _chaosKitty.Meow(evt.BatchId);
         }
-        
+
         [UsedImplicitly]
         private async Task Handle(BlockchainOperationsExecutor.Contract.Events.OneToManyOperationExecutionCompletedEvent evt, ICommandSender sender)
         {
