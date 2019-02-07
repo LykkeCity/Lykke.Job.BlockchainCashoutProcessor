@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 {
-    public class WaitForBxatchExpirationCommandsHandlerTests
+    public class WaitForBatchExpirationCommandsHandlerTests
     {
         private readonly TimeSpan _expirationMonitoringPeriod;
         private readonly Mock<IEventPublisher> _eventsPublisherMock;
@@ -21,7 +21,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
         private CashoutsBatchAggregate _batch;
 
-        public WaitForBxatchExpirationCommandsHandlerTests()
+        public WaitForBatchExpirationCommandsHandlerTests()
         {
             _expirationMonitoringPeriod = TimeSpan.FromMinutes(2);
 
