@@ -24,7 +24,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AppServices.Lifecycle
         {
             _log.Info("Starting cqrs engine...");
 
-            _cqrsEngine.Start();
+            _cqrsEngine.StartAll();
 
             await Task.CompletedTask;
         }
