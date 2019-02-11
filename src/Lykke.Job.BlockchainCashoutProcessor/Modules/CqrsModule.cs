@@ -98,8 +98,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         .MapMessageId<NotifyCrossClientCashoutCompletedCommand>(x => x.OperationId.ToString())
                         .MapMessageId<NotifyCashoutCompletedCommand>(x => x.OperationId.ToString())
                         .MapMessageId<NotifyCashoutFailedCommand>(x => x.OperationId.ToString())
+                        .MapMessageId<StartCashoutCommand>(x => x.OperationId.ToString())
 
-                      //Events
+                        //Events
+                        .MapMessageId<BatchedCashoutStartedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CashoutCompletedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CashoutFailedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CashoutsBatchCompletedEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<CashoutsBatchFailedEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<CashoutStartedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CrossClientCashoutCompletedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CrossClientCashoutStartedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<BatchedCashout>(x => x.OperationId.ToString())
+
                         .MapMessageId<CashinEnrolledToMatchingEngineEvent>(x => x.CashoutOperationId.ToString())
                         .MapMessageId<ActiveBatchIdRevokedEvent>(x => x.BatchId.ToString())
                         .MapMessageId<BatchClosedEvent>(x => x.BatchId.ToString())
