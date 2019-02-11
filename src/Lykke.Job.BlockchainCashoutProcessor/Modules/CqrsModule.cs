@@ -99,13 +99,27 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         .MapMessageId<NotifyCashoutCompletedCommand>(x => x.OperationId.ToString())
                         .MapMessageId<NotifyCashoutFailedCommand>(x => x.OperationId.ToString())
 
-                        //Events
+                      //Events
                         .MapMessageId<CashinEnrolledToMatchingEngineEvent>(x => x.CashoutOperationId.ToString())
                         .MapMessageId<ActiveBatchIdRevokedEvent>(x => x.BatchId.ToString())
                         .MapMessageId<BatchClosedEvent>(x => x.BatchId.ToString())
                         .MapMessageId<BatchExpiredEvent>(x => x.BatchId.ToString())
                         .MapMessageId<BatchFilledEvent>(x => x.BatchId.ToString())
-                        .MapMessageId<BatchFillingStartedEvent>(x => x.BatchId.ToString());
+                        .MapMessageId<BatchFillingStartedEvent>(x => x.BatchId.ToString())
+
+                        //External Commands
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand>(
+                            x => x.OperationId.ToString())
+
+                        //External Events
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OneToManyOperationExecutionCompletedEvent>(
+                            x => x.OperationId.ToString());
 
                     #endregion
                 });
