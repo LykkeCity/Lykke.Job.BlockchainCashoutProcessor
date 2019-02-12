@@ -3,6 +3,7 @@ using Autofac;
 using Lykke.Common.Log;
 using Lykke.Cqrs;
 using Lykke.Cqrs.Configuration;
+using Lykke.Cqrs.MessageCancellation.Interceptors;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
@@ -67,7 +68,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<RevokeActiveBatchIdCommandsHandler>();
             builder.RegisterType<WaitForBatchExpirationCommandsHandler>()
                 .WithParameter(TypedParameter.From(_batchingSettings.ExpirationMonitoringPeriod));
-            
+
             // Cross client command handlers
             builder.RegisterType<EnrollToMatchingEngineCommandsHandler>();
             builder.RegisterType<NotifyCrossClientCashoutCompletedCommandsHandler>();
@@ -78,7 +79,62 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             // Projections
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
-           
+
+            //CQRS Message Cancellation
+            Lykke.Cqrs.MessageCancellation.Configuration.ContainerBuilderExtensions.RegisterCqrsMessageCancellation(
+                builder,
+                (options) =>
+                {
+                    #region Registry
+
+                    //Commands
+                    options.Value
+                        .MapMessageId<EnrollToMatchingEngineCommand>(x => x.CashinOperationId.ToString())
+                        .MapMessageId<CloseBatchCommand>(x => x.BatchId.ToString())
+                        .MapMessageId<CompleteBatchCommand>(x => x.BatchId.ToString())
+                        .MapMessageId<FailBatchCommand>(x => x.BatchId.ToString())
+                        .MapMessageId<RevokeActiveBatchIdCommand>(x => x.BatchId.ToString())
+                        .MapMessageId<WaitForBatchExpirationCommand>(x => x.BatchId.ToString())
+                        .MapMessageId<NotifyCrossClientCashoutCompletedCommand>(x => x.OperationId.ToString())
+                        .MapMessageId<NotifyCashoutCompletedCommand>(x => x.OperationId.ToString())
+                        .MapMessageId<NotifyCashoutFailedCommand>(x => x.OperationId.ToString())
+                        .MapMessageId<StartCashoutCommand>(x => x.OperationId.ToString())
+
+                        //Events
+                        .MapMessageId<BatchedCashoutStartedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CashoutCompletedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CashoutFailedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CashoutsBatchCompletedEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<CashoutsBatchFailedEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<CashoutStartedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CrossClientCashoutCompletedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<CrossClientCashoutStartedEvent>(x => x.OperationId.ToString())
+                        .MapMessageId<BatchedCashout>(x => x.OperationId.ToString())
+
+                        .MapMessageId<CashinEnrolledToMatchingEngineEvent>(x => x.CashoutOperationId.ToString())
+                        .MapMessageId<ActiveBatchIdRevokedEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<BatchClosedEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<BatchExpiredEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<BatchFilledEvent>(x => x.BatchId.ToString())
+                        .MapMessageId<BatchFillingStartedEvent>(x => x.BatchId.ToString())
+
+                        //External Commands
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Commands.StartOneToManyOutputsExecutionCommand>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand>(
+                            x => x.OperationId.ToString())
+
+                        //External Events
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OneToManyOperationExecutionCompletedEvent>(
+                            x => x.OperationId.ToString());
+
+                    #endregion
+                });
+
             builder.Register(CreateEngine)
                 .As<ICqrsEngine>()
                 .SingleInstance()
@@ -122,6 +178,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 messagingEngine,
                 new DefaultEndpointProvider(),
                 true,
+            #region CQRS Message Cancellation
+                Register.CommandInterceptor<MessageCancellationCommandInterceptor>(),
+                Register.EventInterceptor<MessageCancellationEventInterceptor>(),
+            #endregion
                 Register.DefaultEndpointResolver(new RabbitMqConventionEndpointResolver(
                     "RabbitMq",
                     SerializationFormat.MessagePack,
@@ -209,7 +269,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .WithCommandsHandler<WaitForBatchExpirationCommandsHandler>()
                     .PublishingEvents(typeof(BatchExpiredEvent))
                     .With(eventsRoute),
-                    
+
                 Register.Saga<CashoutSaga>($"{Self}.saga")
                     .ListeningEvents(typeof(CashoutStartedEvent))
                     .From(Self)
