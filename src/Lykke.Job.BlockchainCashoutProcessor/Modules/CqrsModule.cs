@@ -12,11 +12,14 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Regular;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Regular;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CrossClient;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -197,13 +200,20 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningCommands(typeof(StartCashoutCommand))
                     .On(defaultRoute)
                     .WithCommandsHandler<StartCashoutCommandsHandler>()
-                    .PublishingEvents(typeof(CashoutRiskControlStartedEvent))
-                    // .PublishingEvents(
-                    //     typeof(CashoutStartedEvent),
-                    //     typeof(CrossClientCashoutStartedEvent),
-                    //     typeof(BatchFillingStartedEvent),
-                    //     typeof(BatchFilledEvent),
-                    //     typeof(BatchedCashoutStartedEvent))
+                    .PublishingEvents(typeof(ValidationStartedEvent))
+                    .With(defaultPipeline)
+
+                    // Risk control
+
+                    .ListeningCommands(typeof(AcceptCashoutCommand))
+                    .On(defaultRoute)
+                    .WithCommandsHandler<AcceptCashoutCommandHandler>()
+                    .PublishingEvents(
+                        typeof(CashoutStartedEvent),
+                        typeof(CrossClientCashoutStartedEvent),
+                        typeof(BatchFillingStartedEvent),
+                        typeof(BatchFilledEvent),
+                        typeof(BatchedCashoutStartedEvent))
                     .With(defaultPipeline)
 
                     // Regular
@@ -359,7 +369,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .With(defaultPipeline),
 
                 Register.Saga<CrossClientCashoutSaga>($"{Self}.risk-control-saga")
-                    .ListeningEvents(typeof(CashoutRiskControlStarted))
+                    .ListeningEvents(typeof(ValidationStartedEvent))
                     .From(Self)
                     .On(defaultRoute)
                     .PublishingCommands(typeof(BlockchainRiskControl.Contract.Commands.ValidateOperationCommand))
@@ -369,13 +379,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .ListeningEvents(typeof(BlockchainRiskControl.Contract.Events.OperationAcceptedEvent))
                     .From(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
                     .On(defaultRoute)
-                    .PublishingCommands(AcceptCashoutCommand)
-                    .PublishingEvents(
-                        typeof(CashoutStartedEvent),
-                        typeof(CrossClientCashoutStartedEvent),
-                        typeof(BatchFillingStartedEvent),
-                        typeof(BatchFilledEvent),
-                        typeof(BatchedCashoutStartedEvent))
+                    .PublishingCommands(typeof(AcceptCashoutCommand))
                     .To(Self)
                     .With(defaultPipeline)
 

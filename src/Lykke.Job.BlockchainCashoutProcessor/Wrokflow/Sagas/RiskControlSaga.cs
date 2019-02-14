@@ -4,23 +4,26 @@ using JetBrains.Annotations;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.Contract;
-using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
-using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Modules;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CrossClient;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.RiskControl;
+using Lykke.Job.BlockchainRiskControl.Contract;
+using Lykke.Job.BlockchainRiskControl.Contract.Commands;
+using Lykke.Job.BlockchainRiskControl.Contract.Events;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
     /// <summary>
-    /// -> Lykke.Job.TransactionsHandler : StartCashoutCommand
-    /// -> CrossClientCashoutStartedEvent
-    ///     -> EnrollToMatchingEngineCommand
-    /// -> CashinEnrolledToMatchingEngineEvent
+    /// 
     /// </summary>
     [UsedImplicitly]
     public class RiskControlSaga
     {
+        private static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
+
         private readonly IChaosKitty _chaosKitty;
         private readonly IRiskControlRepository _riskControlRepository;
 
@@ -33,75 +36,116 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
 
         [UsedImplicitly]
-        private async Task Handle(CachoutRiskControlEvent evt, ICommandSender sender)
+        private async Task Handle(ValidationStartedEvent evt, ICommandSender sender)
         {
             var aggregate = await _riskControlRepository.GetOrAddAsync(
                 evt.OperationId,
-                () => RiskControlAggregate.Start(
+                () => RiskControlAggregate.Create(
                     evt.OperationId,
                     evt.ClientId,
                     evt.BlockchainType,
                     evt.BlockchainAssetId,
-                    evt.FromAddress,
+                    evt.HotWalletAddress,
                     evt.ToAddress,
-                    evt.Amount,
-                    evt.AssetId,
-                    evt.RecipientClientId));
+                    evt.Amount));
 
             _chaosKitty.Meow(evt.OperationId);
 
-            if (aggregate.State == CrossClientCashoutState.Started)
+            if (aggregate.Start())
             {
                 sender.SendCommand
                 (
-                    new EnrollToMatchingEngineCommand
+                    new ValidateOperationCommand
                     {
-                        CashinOperationId = aggregate.CashinOperationId,
-                        CashoutOperationId = aggregate.OperationId,
-                        RecipientClientId = aggregate.RecipientClientId,
-                        Amount = aggregate.Amount,
-                        AssetId = aggregate.AssetId
+                        OperationId = evt.OperationId,
+                        UserId = evt.ClientId,
+                        Type = OperationType.Withdrawal,
+                        BlockchainAssetId = evt.BlockchainAssetId,
+                        BlockchainType = evt.BlockchainType,
+                        FromAddress = evt.HotWalletAddress,
+                        ToAddress = evt.ToAddress,
+                        Amount = evt.Amount
                     },
-                    CqrsModule.Self
+                    BlockchainRiskControlBoundedContext.Name
                 );
+
+                _chaosKitty.Meow(evt.OperationId);
+
+                await _riskControlRepository.SaveAsync(aggregate);
 
                 _chaosKitty.Meow(evt.OperationId);
             }
         }
 
         [UsedImplicitly]
-        private async Task Handle(CashinEnrolledToMatchingEngineEvent evt, ICommandSender sender)
+        private async Task Handle(OperationAcceptedEvent evt, ICommandSender sender)
         {
-            var aggregate = await _riskControlRepository.GetAsync(evt.CashoutOperationId);
+            var aggregate = await _riskControlRepository.TryGetAsync(evt.OperationId);
 
-            var matchingEngineEnrollementMoment = DateTime.UtcNow;
-
-            if (aggregate.OnEnrolledToMatchingEngine(matchingEngineEnrollementMoment))
+            if (aggregate == null)
             {
-                if (!aggregate.MatchingEngineEnrollementMoment.HasValue)
-                {
-                    throw new InvalidOperationException("ME enrollement moment should be not null here");
-                }
+                return; // not a cashout operation
+            }
 
+            if (aggregate.OnOperationAccepted())
+            {
                 sender.SendCommand
                 (
-                    new NotifyCrossClientCashoutCompletedCommand
+                    new AcceptCashoutCommand
                     {
-                        OperationId = aggregate.OperationId,
-                        ClientId = aggregate.ClientId,
-                        CashinOperationId = aggregate.CashinOperationId,
-                        RecipientClientId = aggregate.RecipientClientId,
-                        AssetId = aggregate.AssetId,
-                        Amount = aggregate.Amount,
-                        StartMoment = aggregate.StartMoment,
-                        FinishMoment = aggregate.MatchingEngineEnrollementMoment.Value
+                        OperationId = evt.OperationId,
+                        UserId = evt.ClientId,
+                        Type = OperationType.Withdrawal,
+                        BlockchainAssetId = evt.BlockchainAssetId,
+                        BlockchainType = evt.BlockchainType,
+                        HotWalletAddress = evt.FromAddress,
+                        ToAddress = evt.ToAddress,
+                        Amount = evt.Amount
                     },
-                    BlockchainCashoutProcessorBoundedContext.Name
+                    Self
                 );
 
-                _chaosKitty.Meow(evt.CashoutOperationId);
+                _chaosKitty.Meow(evt.OperationId);
 
                 await _riskControlRepository.SaveAsync(aggregate);
+
+                _chaosKitty.Meow(evt.OperationId);
+            }
+        }
+
+        [UsedImplicitly]
+        private async Task Handle(OperationRejectedEvent evt, ICommandSender sender)
+        {
+            var aggregate = await _riskControlRepository.TryGetAsync(evt.OperationId);
+
+            if (aggregate == null)
+            {
+                return; // not a cashout operation
+            }
+
+            if (aggregate.OnOperationRejected(evt.Message))
+            {
+                sender.SendCommand
+                (
+                    new RejectCashoutCommand
+                    {
+                        OperationId = evt.OperationId,
+                        UserId = evt.ClientId,
+                        Type = OperationType.Withdrawal,
+                        BlockchainAssetId = evt.BlockchainAssetId,
+                        BlockchainType = evt.BlockchainType,
+                        FromAddress = evt.FromAddress,
+                        ToAddress = evt.ToAddress,
+                        Amount = evt.Amount
+                    },
+                    Self
+                );
+
+                _chaosKitty.Meow(evt.OperationId);
+
+                await _riskControlRepository.SaveAsync(aggregate);
+
+                _chaosKitty.Meow(evt.OperationId);
             }
         }
     }

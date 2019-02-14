@@ -10,12 +10,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
         public RiskControlResult Result { get; private set; }
         public CashoutErrorCode? ErrorCode { get; private set; }
 
-        public DateTime StartMoment { get; }
-        public DateTime? OperationFinishMoment { get; private set; }
+        public DateTime CreationMoment { get; }
+        public DateTime? StartMoment { get; private set; }
+        public DateTime? OperationAcceptanceMoment { get; private set; }
+        public DateTime? OperationRejectionMoment { get; private set; }
 
         public Guid OperationId { get; }
-
-        public Guid? BatchId { get; }
         public Guid ClientId { get; }
         public string BlockchainType { get; }
         public string BlockchainAssetId { get; }
@@ -23,36 +23,37 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
         public string ToAddress { get; }
         public decimal Amount { get; }
         public string AssetId { get; }
-
-        public string TransactionHash { get; private set; }
-        public decimal? TransactionAmount { get; private set; }
-        public decimal? Fee { get; private set; }
         public string Error { get; private set; }
 
         private RiskControlAggregate(
             Guid operationId,
             Guid clientId,
+            string assetId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress,
             string toAddress,
             decimal amount,
-            string assetId,
             RiskControlState state)
         {
             StartMoment = DateTime.UtcNow;
 
             OperationId = operationId;
             ClientId = clientId;
+            AssetId = assetId;
             BlockchainType = blockchainType;
             BlockchainAssetId = blockchainAssetId;
             HotWalletAddress = hotWalletAddress;
             ToAddress = toAddress;
             Amount = amount;
-            AssetId = assetId;
 
             State = state;
-            Result = CashoutResult.Unknown;
+            Result = RiskControlResult.Unknown;
+        }
+
+        public static RiskControlAggregate Create(Guid operationId, Guid clientId, string blockchainType, string blockchainAssetId, string fromAddress, string toAddress, decimal amount)
+        {
+            throw new NotImplementedException();
         }
 
         private RiskControlAggregate(
@@ -80,7 +81,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
             Result = result;
 
             StartMoment = startMoment;
-            OperationFinishMoment = operationFinishMoment;
+            OperationAcceptanceMoment = operationFinishMoment;
 
             OperationId = operationId;
             ClientId = clientId;
@@ -98,7 +99,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
             BatchId = batchId;
         }
 
-        public static CashoutAggregate Start(
+        public static RiskControlAggregate Create(
             Guid operationId,
             Guid clientId,
             string blockchainType,
@@ -108,7 +109,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
             decimal amount,
             string assetId)
         {
-            return new CashoutAggregate(
+            return new RiskControlAggregate(
                 operationId,
                 clientId,
                 blockchainType,
@@ -117,7 +118,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
                 toAddress,
                 amount,
                 assetId,
-                CashoutState.Started);
+                RiskControlState.Created);
         }
 
         public static CashoutAggregate Restore(
@@ -140,7 +141,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
             string error,
             Guid? batchId)
         {
-            return new CashoutAggregate(
+            return new RiskControlAggregate(
                 version,
                 state,
                 result,
@@ -161,43 +162,49 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
                 batchId);
         }
 
-        public bool OnOperationCompleted(string transactionHash, decimal transactionAmount, decimal fee, DateTime operationFinishMoment)
+        public bool Start()
         {
-            if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
+            if (!SwitchState(RiskControlState.Created, RiskControlState.Started))
             {
                 return false;
             }
 
-            OperationFinishMoment = operationFinishMoment;
-
-            TransactionHash = transactionHash;
-            TransactionAmount = transactionAmount;
-            Fee = fee;
-
-            Result = CashoutResult.Success;
+            StartMoment = DateTime.UtcNow;
 
             return true;
         }
 
-        public bool OnOperationFailed(string error, CashoutErrorCode? errorCode, DateTime operationFinishMoment)
+        public bool OnOperationAccepted()
         {
-            if (!SwitchState(CashoutState.Started, CashoutState.OperationIsFinished))
+            if (!SwitchState(RiskControlState.Started, RiskControlState.OperationAccepted))
             {
                 return false;
             }
 
-            OperationFinishMoment = operationFinishMoment;
+            OperationAcceptanceMoment = DateTime.UtcNow;
+
+            Result = RiskControlResult.Success;
+
+            return true;
+        }
+
+        public bool OnOperationRejected(string error)
+        {
+            if (!SwitchState(RiskControlState.Started, RiskControlState.OperationRejected))
+            {
+                return false;
+            }
 
             Error = error;
 
-            Result = CashoutResult.Failure;
+             = DateTime.UtcNow;
 
-            ErrorCode = errorCode;
+            Result = RiskControlResult.Failure;
 
             return true;
         }
 
-        private bool SwitchState(CashoutState expectedState, CashoutState nextState)
+        private bool SwitchState(RiskControlState expectedState, RiskControlState nextState)
         {
             if (State < expectedState)
             {

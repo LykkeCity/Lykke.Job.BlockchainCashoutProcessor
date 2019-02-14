@@ -2,7 +2,9 @@
 {
     public enum RiskControlState
     {
+        Created,
         Started,
-        OperationIsFinished
+        OperationAccepted,
+        OperationRejected
     }
 }

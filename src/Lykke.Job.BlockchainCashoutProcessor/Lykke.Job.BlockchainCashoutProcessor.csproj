@@ -51,4 +51,7 @@
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.Core\Lykke.Job.BlockchainCashoutProcessor.Core.csproj" />
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.Services\Lykke.Job.BlockchainCashoutProcessor.Services.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Wrokflow\CommandHandlers\RiskControl\" />
+  </ItemGroup>
 </Project>
