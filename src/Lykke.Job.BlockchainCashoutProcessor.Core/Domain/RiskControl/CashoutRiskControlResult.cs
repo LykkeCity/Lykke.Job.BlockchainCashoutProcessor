@@ -1,6 +1,6 @@
 ﻿namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
 {
-    public enum RiskControlResult
+    public enum CashoutRiskControlResult
     {
         Unknown,
         Success,

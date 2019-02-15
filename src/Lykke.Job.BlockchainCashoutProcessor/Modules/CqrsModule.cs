@@ -59,9 +59,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
             builder.RegisterType<CashoutSaga>();
             builder.RegisterType<CrossClientCashoutSaga>();
             builder.RegisterType<BatchSaga>();
+            builder.RegisterType<RiskControlSaga>();
 
             // Common command handlers
-            builder.RegisterType<StartCashoutCommandsHandler>()
+            builder.RegisterType<StartCashoutCommandsHandler>();
+
+            // Risk control command handlers
+            builder.RegisterType<AcceptCashoutCommandsHandler>()
                 .WithParameter(TypedParameter.From(_workflowSettings?.DisableDirectCrossClientCashouts ?? false));
 
             // Batch command handlers
@@ -102,6 +106,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         .MapMessageId<NotifyCashoutCompletedCommand>(x => x.OperationId.ToString())
                         .MapMessageId<NotifyCashoutFailedCommand>(x => x.OperationId.ToString())
                         .MapMessageId<StartCashoutCommand>(x => x.OperationId.ToString())
+                        .MapMessageId<AcceptCashoutCommand>(x => x.OperationId.ToString())
 
                         //Events
                         .MapMessageId<BatchedCashoutStartedEvent>(x => x.OperationId.ToString())
@@ -113,6 +118,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         .MapMessageId<CrossClientCashoutCompletedEvent>(x => x.OperationId.ToString())
                         .MapMessageId<CrossClientCashoutStartedEvent>(x => x.OperationId.ToString())
                         .MapMessageId<BatchedCashout>(x => x.OperationId.ToString())
+                        .MapMessageId<ValidationStartedEvent>(x => x.OperationId.ToString())
 
                         .MapMessageId<CashinEnrolledToMatchingEngineEvent>(x => x.CashoutOperationId.ToString())
                         .MapMessageId<ActiveBatchIdRevokedEvent>(x => x.BatchId.ToString())
@@ -126,6 +132,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                             x => x.OperationId.ToString())
                         .MapMessageId<BlockchainOperationsExecutor.Contract.Commands.StartOperationExecutionCommand>(
                             x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainRiskControl.Contract.Commands.ValidateOperationCommand>(
+                            x => x.OperationId.ToString())
 
                         //External Events
                         .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OperationExecutionCompletedEvent>(
@@ -133,6 +141,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                         .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OperationExecutionFailedEvent>(
                             x => x.OperationId.ToString())
                         .MapMessageId<BlockchainOperationsExecutor.Contract.Events.OneToManyOperationExecutionCompletedEvent>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainRiskControl.Contract.Events.OperationAcceptedEvent>(
+                            x => x.OperationId.ToString())
+                        .MapMessageId<BlockchainRiskControl.Contract.Events.OperationRejectedEvent>(
                             x => x.OperationId.ToString());
 
                     #endregion
@@ -207,7 +219,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
                     .ListeningCommands(typeof(AcceptCashoutCommand))
                     .On(defaultRoute)
-                    .WithCommandsHandler<AcceptCashoutCommandHandler>()
+                    .WithCommandsHandler<AcceptCashoutCommandsHandler>()
                     .PublishingEvents(
                         typeof(CashoutStartedEvent),
                         typeof(CrossClientCashoutStartedEvent),
@@ -280,6 +292,28 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .WithCommandsHandler<WaitForBatchExpirationCommandsHandler>()
                     .PublishingEvents(typeof(BatchExpiredEvent))
                     .With(eventsRoute),
+
+                Register.Saga<CrossClientCashoutSaga>($"{Self}.risk-control-saga")
+                    .ListeningEvents(typeof(ValidationStartedEvent))
+                    .From(Self)
+                    .On(defaultRoute)
+                    .PublishingCommands(typeof(BlockchainRiskControl.Contract.Commands.ValidateOperationCommand))
+                    .To(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(typeof(BlockchainRiskControl.Contract.Events.OperationAcceptedEvent))
+                    .From(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
+                    .On(defaultRoute)
+                    .PublishingCommands(typeof(AcceptCashoutCommand))
+                    .To(Self)
+                    .With(defaultPipeline)
+
+                    .ListeningEvents(typeof(BlockchainRiskControl.Contract.Events.OperationRejectedEvent))
+                    .From(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
+                    .On(defaultRoute)
+                    .PublishingCommands(typeof(NotifyCashoutFailedCommand))
+                    .To(Self)
+                    .With(defaultPipeline),
 
                 Register.Saga<CashoutSaga>($"{Self}.saga")
                     .ListeningEvents(typeof(CashoutStartedEvent))
@@ -365,28 +399,6 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .From(BlockchainOperationsExecutorBoundedContext.Name)
                     .On(defaultRoute)
                     .PublishingCommands(typeof(FailBatchCommand))
-                    .To(Self)
-                    .With(defaultPipeline),
-
-                Register.Saga<CrossClientCashoutSaga>($"{Self}.risk-control-saga")
-                    .ListeningEvents(typeof(ValidationStartedEvent))
-                    .From(Self)
-                    .On(defaultRoute)
-                    .PublishingCommands(typeof(BlockchainRiskControl.Contract.Commands.ValidateOperationCommand))
-                    .To(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
-                    .With(defaultPipeline)
-
-                    .ListeningEvents(typeof(BlockchainRiskControl.Contract.Events.OperationAcceptedEvent))
-                    .From(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
-                    .On(defaultRoute)
-                    .PublishingCommands(typeof(AcceptCashoutCommand))
-                    .To(Self)
-                    .With(defaultPipeline)
-
-                    .ListeningEvents(typeof(BlockchainRiskControl.Contract.Events.OperationRejectedEvent))
-                    .From(BlockchainRiskControl.Contract.BlockchainRiskControlBoundedContext.Name)
-                    .On(defaultRoute)
-                    .PublishingCommands(typeof(RejectCashoutCommand))
                     .To(Self)
                     .With(defaultPipeline)
                 );

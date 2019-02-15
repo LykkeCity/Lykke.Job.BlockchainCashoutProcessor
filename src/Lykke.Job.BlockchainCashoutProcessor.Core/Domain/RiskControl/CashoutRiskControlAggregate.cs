@@ -2,13 +2,12 @@
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
 {
-    public class RiskControlAggregate
+    public class CashoutRiskControlAggregate
     {
         public string Version { get; }
 
-        public RiskControlState State { get; private set; }
-        public RiskControlResult Result { get; private set; }
-        public CashoutErrorCode? ErrorCode { get; private set; }
+        public CashoutRiskControlState State { get; private set; }
+        public CashoutRiskControlResult Result { get; private set; }
 
         public DateTime CreationMoment { get; }
         public DateTime? StartMoment { get; private set; }
@@ -25,146 +24,114 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
         public string AssetId { get; }
         public string Error { get; private set; }
 
-        private RiskControlAggregate(
-            Guid operationId,
-            Guid clientId,
-            string assetId,
-            string blockchainType,
-            string blockchainAssetId,
-            string hotWalletAddress,
-            string toAddress,
-            decimal amount,
-            RiskControlState state)
-        {
-            StartMoment = DateTime.UtcNow;
-
-            OperationId = operationId;
-            ClientId = clientId;
-            AssetId = assetId;
-            BlockchainType = blockchainType;
-            BlockchainAssetId = blockchainAssetId;
-            HotWalletAddress = hotWalletAddress;
-            ToAddress = toAddress;
-            Amount = amount;
-
-            State = state;
-            Result = RiskControlResult.Unknown;
-        }
-
-        public static RiskControlAggregate Create(Guid operationId, Guid clientId, string blockchainType, string blockchainAssetId, string fromAddress, string toAddress, decimal amount)
-        {
-            throw new NotImplementedException();
-        }
-
-        private RiskControlAggregate(
+        private CashoutRiskControlAggregate(
             string version,
-            RiskControlState state,
-            RiskControlResult result,
-            DateTime startMoment,
-            DateTime? operationFinishMoment,
+            CashoutRiskControlState state,
+            CashoutRiskControlResult result,
+            DateTime creationMoment,
+            DateTime? startMoment,
+            DateTime? operationAcceptanceMoment,
+            DateTime? operationRejectionMoment,
             Guid operationId,
             Guid clientId,
+            string assetId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress,
             string toAddress,
             decimal amount,
-            string assetId,
-            string transactionHash,
-            decimal? transactionAmount,
-            decimal? fee,
-            string error,
-            Guid? batchId)
+            string error)
         {
             Version = version;
             State = state;
             Result = result;
 
+            CreationMoment = creationMoment;
             StartMoment = startMoment;
-            OperationAcceptanceMoment = operationFinishMoment;
+            OperationAcceptanceMoment = operationAcceptanceMoment;
+            OperationRejectionMoment = operationRejectionMoment;
 
             OperationId = operationId;
             ClientId = clientId;
+            AssetId = assetId;
             BlockchainType = blockchainType;
             BlockchainAssetId = blockchainAssetId;
             HotWalletAddress = hotWalletAddress;
             ToAddress = toAddress;
             Amount = amount;
-            AssetId = assetId;
 
-            TransactionHash = transactionHash;
-            TransactionAmount = transactionAmount;
-            Fee = fee;
             Error = error;
-            BatchId = batchId;
         }
 
-        public static RiskControlAggregate Create(
+        public static CashoutRiskControlAggregate Create(
             Guid operationId,
             Guid clientId,
+            string assetId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress,
             string toAddress,
-            decimal amount,
-            string assetId)
+            decimal amount)
         {
-            return new RiskControlAggregate(
+            return new CashoutRiskControlAggregate(
+                null,
+                CashoutRiskControlState.Created,
+                CashoutRiskControlResult.Unknown,
+                DateTime.UtcNow,
+                null,
+                null,
+                null,
                 operationId,
                 clientId,
+                assetId,
                 blockchainType,
                 blockchainAssetId,
                 hotWalletAddress,
                 toAddress,
                 amount,
-                assetId,
-                RiskControlState.Created);
+                null);
         }
 
-        public static CashoutAggregate Restore(
+        public static CashoutRiskControlAggregate Restore(
             string version,
-            CashoutState state,
-            CashoutResult result,
-            DateTime startMoment,
-            DateTime? operationFinishMoment,
+            CashoutRiskControlState state,
+            CashoutRiskControlResult result,
+            DateTime creationMoment,
+            DateTime? startMoment,
+            DateTime? operationAcceptanceMoment,
+            DateTime? operationRejectionMoment,
             Guid operationId,
             Guid clientId,
+            string assetId,
             string blockchainType,
             string blockchainAssetId,
             string hotWalletAddress,
             string toAddress,
             decimal amount,
-            string assetId,
-            string transactionHash,
-            decimal? transactionAmount,
-            decimal? fee,
-            string error,
-            Guid? batchId)
+            string error)
         {
-            return new RiskControlAggregate(
+            return new CashoutRiskControlAggregate(
                 version,
                 state,
                 result,
+                creationMoment,
                 startMoment,
-                operationFinishMoment,
+                operationAcceptanceMoment,
+                operationRejectionMoment,
                 operationId,
                 clientId,
+                assetId,
                 blockchainType,
                 blockchainAssetId,
                 hotWalletAddress,
                 toAddress,
                 amount,
-                assetId,
-                transactionHash,
-                transactionAmount,
-                fee,
-                error,
-                batchId);
+                error);
         }
 
         public bool Start()
         {
-            if (!SwitchState(RiskControlState.Created, RiskControlState.Started))
+            if (!SwitchState(CashoutRiskControlState.Created, CashoutRiskControlState.Started))
             {
                 return false;
             }
@@ -176,35 +143,35 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl
 
         public bool OnOperationAccepted()
         {
-            if (!SwitchState(RiskControlState.Started, RiskControlState.OperationAccepted))
+            if (!SwitchState(CashoutRiskControlState.Started, CashoutRiskControlState.OperationAccepted))
             {
                 return false;
             }
 
             OperationAcceptanceMoment = DateTime.UtcNow;
 
-            Result = RiskControlResult.Success;
+            Result = CashoutRiskControlResult.Success;
 
             return true;
         }
 
         public bool OnOperationRejected(string error)
         {
-            if (!SwitchState(RiskControlState.Started, RiskControlState.OperationRejected))
+            if (!SwitchState(CashoutRiskControlState.Started, CashoutRiskControlState.OperationRejected))
             {
                 return false;
             }
 
+            OperationRejectionMoment = DateTime.UtcNow;
+
+            Result = CashoutRiskControlResult.Failure;
+
             Error = error;
-
-             = DateTime.UtcNow;
-
-            Result = RiskControlResult.Failure;
 
             return true;
         }
 
-        private bool SwitchState(RiskControlState expectedState, RiskControlState nextState)
+        private bool SwitchState(CashoutRiskControlState expectedState, CashoutRiskControlState nextState)
         {
             if (State < expectedState)
             {

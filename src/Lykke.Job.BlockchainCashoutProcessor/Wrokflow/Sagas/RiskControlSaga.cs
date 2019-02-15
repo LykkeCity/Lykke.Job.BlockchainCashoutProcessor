@@ -13,11 +13,15 @@ using Lykke.Job.BlockchainRiskControl.Contract;
 using Lykke.Job.BlockchainRiskControl.Contract.Commands;
 using Lykke.Job.BlockchainRiskControl.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Regular;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
     /// <summary>
-    /// 
+    /// -> Lykke.Job.TransactionsHandler : StartCashoutCommand
+    /// -> CashoutStartedEvent
+    ///     -> BlockchainRiskControl : ValidateOperationCommand
+    /// -> BlockchainRiskControl : OperationAcceptedEvent | OperationRejectedEvent
     /// </summary>
     [UsedImplicitly]
     public class RiskControlSaga
@@ -25,24 +29,25 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         private static readonly string Self = BlockchainCashoutProcessorBoundedContext.Name;
 
         private readonly IChaosKitty _chaosKitty;
-        private readonly IRiskControlRepository _riskControlRepository;
+        private readonly ICashoutRiskControlRepository _riskControlRepository;
 
         public RiskControlSaga(
             IChaosKitty chaosKitty,
-            IRiskControlRepository riskControlRepository)
+            ICashoutRiskControlRepository riskControlRepository)
         {
             _chaosKitty = chaosKitty;
             _riskControlRepository = riskControlRepository;
         }
 
         [UsedImplicitly]
-        private async Task Handle(ValidationStartedEvent evt, ICommandSender sender)
+        public async Task Handle(ValidationStartedEvent evt, ICommandSender sender)
         {
             var aggregate = await _riskControlRepository.GetOrAddAsync(
                 evt.OperationId,
-                () => RiskControlAggregate.Create(
+                () => CashoutRiskControlAggregate.Create(
                     evt.OperationId,
                     evt.ClientId,
+                    evt.AssetId,
                     evt.BlockchainType,
                     evt.BlockchainAssetId,
                     evt.HotWalletAddress,
@@ -78,7 +83,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
 
         [UsedImplicitly]
-        private async Task Handle(OperationAcceptedEvent evt, ICommandSender sender)
+        public async Task Handle(OperationAcceptedEvent evt, ICommandSender sender)
         {
             var aggregate = await _riskControlRepository.TryGetAsync(evt.OperationId);
 
@@ -94,13 +99,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
                     new AcceptCashoutCommand
                     {
                         OperationId = evt.OperationId,
-                        UserId = evt.ClientId,
-                        Type = OperationType.Withdrawal,
-                        BlockchainAssetId = evt.BlockchainAssetId,
-                        BlockchainType = evt.BlockchainType,
-                        HotWalletAddress = evt.FromAddress,
-                        ToAddress = evt.ToAddress,
-                        Amount = evt.Amount
+                        ClientId = aggregate.ClientId,
+                        AssetId = aggregate.AssetId,
+                        BlockchainType = aggregate.BlockchainType,
+                        BlockchainAssetId = aggregate.BlockchainAssetId,
+                        HotWalletAddress = aggregate.HotWalletAddress,
+                        ToAddress = aggregate.ToAddress,
+                        Amount = aggregate.Amount
                     },
                     Self
                 );
@@ -114,7 +119,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
         }
 
         [UsedImplicitly]
-        private async Task Handle(OperationRejectedEvent evt, ICommandSender sender)
+        public async Task Handle(OperationRejectedEvent evt, ICommandSender sender)
         {
             var aggregate = await _riskControlRepository.TryGetAsync(evt.OperationId);
 
@@ -125,20 +130,21 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 
             if (aggregate.OnOperationRejected(evt.Message))
             {
+                // just send a regular CashoutFailed notification
                 sender.SendCommand
                 (
-                    new RejectCashoutCommand
+                    new NotifyCashoutFailedCommand
                     {
-                        OperationId = evt.OperationId,
-                        UserId = evt.ClientId,
-                        Type = OperationType.Withdrawal,
-                        BlockchainAssetId = evt.BlockchainAssetId,
-                        BlockchainType = evt.BlockchainType,
-                        FromAddress = evt.FromAddress,
-                        ToAddress = evt.ToAddress,
-                        Amount = evt.Amount
+                        OperationId = aggregate.OperationId,
+                        ClientId = aggregate.ClientId,
+                        AssetId = aggregate.AssetId,
+                        Amount = aggregate.Amount,
+                        StartMoment = aggregate.StartMoment.Value,
+                        FinishMoment = aggregate.OperationRejectionMoment.Value,
+                        Error = aggregate.Error,
+                        ErrorCode = CashoutErrorCode.Unknown
                     },
-                    Self
+                    CqrsModule.Self
                 );
 
                 _chaosKitty.Meow(evt.OperationId);

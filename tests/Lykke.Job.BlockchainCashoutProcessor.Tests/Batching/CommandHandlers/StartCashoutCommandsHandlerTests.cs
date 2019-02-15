@@ -13,6 +13,8 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskControl;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
 using Lykke.Logs;
 using Lykke.Logs.Loggers.LykkeConsole;
@@ -33,7 +35,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
         private readonly Mock<IClosedBatchedCashoutRepository> _closedBatchedCashoutsRepositoryMock;
 
         private readonly CqrsSettings _cqrsSettings;
-        private readonly StartCashoutCommandsHandler _handler;
+        private readonly AcceptCashoutCommandsHandler _handler;
 
         private CashoutsBatchAggregate _batch;
 
@@ -79,15 +81,13 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
                 }
             );
 
-            _handler = new StartCashoutCommandsHandler
+            _handler = new AcceptCashoutCommandsHandler
             (
-                logFactory,
                 new SilentChaosKitty(),
                 _batchRepositoryMock.Object,
                 _closedBatchedCashoutsRepositoryMock.Object,
                 activeCashoutsBatchIdRepositoryMock.Object,
                 blockchainConfigurationProvider,
-                assetsServiceMock.Object,
                 walletsClient.Object,
                 _cqrsSettings,
                 false
@@ -176,12 +176,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 100,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination"
                 },
                 _eventsPublisherMock.Object
@@ -234,12 +237,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 50,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination-last"
                 },
                 _eventsPublisherMock.Object
@@ -291,12 +297,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 50,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination-last"
                 },
                 _eventsPublisherMock.Object
@@ -351,12 +360,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 50,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination-last"
                 },
                 _eventsPublisherMock.Object
@@ -405,12 +417,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var extraHandlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 10,
                     ClientId = extraClientId,
                     OperationId = extraCashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination-extra"
                 },
                 _eventsPublisherMock.Object
@@ -443,12 +458,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 100,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination"
                 },
                 _eventsPublisherMock.Object
@@ -480,12 +498,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 100,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination"
                 },
                 _eventsPublisherMock.Object
@@ -518,12 +539,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 100,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination"
                 },
                 _eventsPublisherMock.Object
@@ -547,12 +571,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var handlingResult = await _handler.Handle
             (
-                new StartCashoutCommand
+                new AcceptCashoutCommand
                 {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
                     AssetId = "LykkeBTC",
                     Amount = 100,
                     ClientId = clientId,
                     OperationId = cashoutId,
+                    HotWalletAddress = "HotWallet",
                     ToAddress = "Destination"
                 },
                 _eventsPublisherMock.Object
@@ -597,12 +624,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var clientId = Guid.NewGuid();
             var cashoutId = Guid.NewGuid();
-            var command = new StartCashoutCommand
+            var command = new AcceptCashoutCommand
             {
+                BlockchainType = "Bitcoin",
+                BlockchainAssetId = "BTC",
                 AssetId = "LykkeBTC",
                 Amount = 50,
                 ClientId = clientId,
                 OperationId = cashoutId,
+                HotWalletAddress = "HotWallet",
                 ToAddress = "Destination-last"
             };
 
@@ -675,12 +705,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             var clientId = Guid.NewGuid();
             var cashoutId = Guid.NewGuid();
-            var command = new StartCashoutCommand
+            var command = new AcceptCashoutCommand
             {
+                BlockchainType = "Bitcoin",
+                BlockchainAssetId = "BTC",
                 AssetId = "LykkeBTC",
                 Amount = 50,
                 ClientId = clientId,
                 OperationId = cashoutId,
+                HotWalletAddress = "HotWallet",
                 ToAddress = "Destination-last"
             };
 

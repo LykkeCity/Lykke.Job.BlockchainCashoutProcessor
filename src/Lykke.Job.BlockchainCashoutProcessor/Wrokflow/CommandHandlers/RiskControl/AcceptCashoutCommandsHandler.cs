@@ -14,7 +14,7 @@ using Lykke.Service.BlockchainWallets.Client;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskControl
 {
-    public class AcceptCashoutCommandHandler
+    public class AcceptCashoutCommandsHandler
     {
         private readonly IChaosKitty _chaosKitty;
         private readonly ICashoutsBatchRepository _cashoutsBatchRepository;
@@ -25,7 +25,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskCont
         private readonly CqrsSettings _cqrsSettings;
         private readonly bool _disableDirectCrossClientCashouts;
 
-        public AcceptCashoutCommandHandler(
+        public AcceptCashoutCommandsHandler(
             IChaosKitty chaosKitty,
             ICashoutsBatchRepository cashoutsBatchRepository,
             IClosedBatchedCashoutRepository closedBatchedCashoutRepository,
@@ -60,7 +60,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskCont
             }
 
             if (blockchainConfiguration.SupportCashoutAggregation)
-            { 
+            {
                 return await StartBatchedCashoutAsync(command, publisher, blockchainConfiguration.CashoutsAggregation);
             }
 

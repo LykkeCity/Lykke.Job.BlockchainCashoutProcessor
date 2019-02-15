@@ -13,8 +13,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CrossClient;
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
     /// <summary>
-    /// -> Lykke.Job.TransactionsHandler : StartCashoutCommand
-    /// -> CrossClientCashoutStartedEvent
+    /// -> RiskControlSaga : CrossClientCashoutStartedEvent
     ///     -> EnrollToMatchingEngineCommand
     /// -> CashinEnrolledToMatchingEngineEvent
     /// </summary>
