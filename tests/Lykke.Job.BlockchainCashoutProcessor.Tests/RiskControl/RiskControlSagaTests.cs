@@ -14,7 +14,9 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.Regular;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskControl;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.Regular;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas;
@@ -46,6 +48,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.RiskControl
         private readonly CqrsSettings _cqrsSettings;
         private readonly BlockchainConfigurationsProvider _blockchainConfigurationProvider;
         private readonly StartCashoutCommandsHandler _startCashoutCommandsHandler;
+        private readonly NotifyCashoutFailedCommandsHandler _notifyCashoutFailedCommandsHandler;
         private readonly AcceptCashoutCommandsHandler _acceptCashoutCommandsHandler;
         private readonly Asset _asset;
         private readonly RiskControlSaga _saga;
@@ -116,6 +119,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.RiskControl
 
             _startCashoutCommandsHandler = new StartCashoutCommandsHandler(_logFactory, _blockchainConfigurationProvider, _assetsServiceMock.Object);
 
+            _notifyCashoutFailedCommandsHandler = new NotifyCashoutFailedCommandsHandler();
+
             _acceptCashoutCommandsHandler = new AcceptCashoutCommandsHandler(
                 _chaosKittyMock.Object,
                 _batchRepositoryMock.Object,
@@ -143,10 +148,17 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.RiskControl
                     It.Is<string>(v => v == BlockchainCashoutProcessorBoundedContext.Name),
                     It.IsAny<uint>()))
                 .Callback((AcceptCashoutCommand cmd, string bc, uint _) => _acceptCashoutCommandsHandler.Handle(cmd, _eventsPublisherMock.Object));
+
+            _commandSender
+                .Setup(x => x.SendCommand(
+                    It.IsAny<NotifyCashoutFailedCommand>(),
+                    It.Is<string>(v => v == BlockchainCashoutProcessorBoundedContext.Name),
+                    It.IsAny<uint>()))
+                .Callback((NotifyCashoutFailedCommand cmd, string bc, uint _) => _notifyCashoutFailedCommandsHandler.Handle(cmd, _eventsPublisherMock.Object));
         }
 
         [Fact]
-        public async Task ShouldPublishValidateOperationCommand()
+        public async Task ShouldStartCashout()
         {
             _commandSender
                 .Setup(x => x.SendCommand(
@@ -184,14 +196,43 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.RiskControl
                 Times.Once);
         }
 
-        public ShouldPublishOperationAcceptedCommand()
+        [Fact]
+        public async Task ShouldRejectCashout()
         {
+            _commandSender
+                .Setup(x => x.SendCommand(
+                    It.IsAny<ValidateOperationCommand>(),
+                    It.Is<string>(v => v == BlockchainRiskControlBoundedContext.Name),
+                    It.IsAny<uint>()))
+                .Callback((ValidateOperationCommand cmd, string bc, uint _) => _eventsPublisherMock.Object.PublishEvent(new OperationRejectedEvent { OperationId = cmd.OperationId, Message = "TestError" }));
 
-        }
+            await _startCashoutCommandsHandler.Handle
+            (
+                new StartCashoutCommand { OperationId = Guid.NewGuid(), ClientId = Guid.NewGuid(), AssetId = _asset.Id, Amount = 0.5m, ToAddress = "TestTo" },
+                _eventsPublisherMock.Object
+            );
 
-        public ShouldPublishNotifyCashoutFailedCommand()
-        {
+            _eventsPublisherMock.Verify(
+                x => x.PublishEvent(It.IsAny<ValidationStartedEvent>()),
+                Times.Once);
 
+            _commandSender.Verify(
+                x => x.SendCommand(
+                    It.IsAny<ValidateOperationCommand>(),
+                    It.Is<string>(v => v == BlockchainRiskControlBoundedContext.Name),
+                    It.IsAny<uint>()),
+                Times.Once);
+
+            _commandSender.Verify(
+                x => x.SendCommand(
+                    It.IsAny<NotifyCashoutFailedCommand>(),
+                    It.Is<string>(v => v == BlockchainCashoutProcessorBoundedContext.Name),
+                    It.IsAny<uint>()),
+                Times.Once);
+
+            _eventsPublisherMock.Verify(
+                x => x.PublishEvent(It.IsAny<CashoutFailedEvent>()),
+                Times.Once);
         }
     }
 }
