@@ -293,7 +293,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                     .PublishingEvents(typeof(BatchExpiredEvent))
                     .With(eventsRoute),
 
-                Register.Saga<CrossClientCashoutSaga>($"{Self}.risk-control-saga")
+                Register.Saga<RiskControlSaga>($"{Self}.risk-control-saga")
                     .ListeningEvents(typeof(ValidationStartedEvent))
                     .From(Self)
                     .On(defaultRoute)
