@@ -5,7 +5,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
 {
-    internal class CshoutRiskControlEntity : AzureTableEntity
+    internal class CashoutRiskControlEntity : AzureTableEntity
     {
         #region Fields
 
@@ -42,9 +42,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
 
         #region Conversion
 
-        public static CshoutRiskControlEntity FromDomain(CashoutRiskControlAggregate aggregate)
+        public static CashoutRiskControlEntity FromDomain(CashoutRiskControlAggregate aggregate)
         {
-            return new CshoutRiskControlEntity
+            return new CashoutRiskControlEntity
             {
                 ETag = string.IsNullOrEmpty(aggregate.Version) ? "*" : aggregate.Version,
                 PartitionKey = GetPartitionKey(aggregate.OperationId),

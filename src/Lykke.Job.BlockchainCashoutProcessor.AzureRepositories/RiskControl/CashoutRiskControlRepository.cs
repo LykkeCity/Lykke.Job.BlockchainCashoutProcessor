@@ -12,11 +12,11 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
     [UsedImplicitly]
     public class CashoutRiskControlRepository : ICashoutRiskControlRepository
     {
-        private readonly INoSQLTableStorage<CshoutRiskControlEntity> _storage;
+        private readonly INoSQLTableStorage<CashoutRiskControlEntity> _storage;
 
         public static ICashoutRiskControlRepository Create(IReloadingManager<string> connectionString, ILogFactory logFactory)
         {
-            var storage = AzureTableStorage<CshoutRiskControlEntity>.Create(
+            var storage = AzureTableStorage<CashoutRiskControlEntity>.Create(
                 connectionString,
                 "CashoutRiskControl",
                 logFactory);
@@ -24,15 +24,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
             return new CashoutRiskControlRepository(storage);
         }
 
-        private CashoutRiskControlRepository(INoSQLTableStorage<CshoutRiskControlEntity> storage)
+        private CashoutRiskControlRepository(INoSQLTableStorage<CashoutRiskControlEntity> storage)
         {
             _storage = storage;
         }
 
         public async Task<CashoutRiskControlAggregate> GetOrAddAsync(Guid operationId, Func<CashoutRiskControlAggregate> newAggregateFactory)
         {
-            var partitionKey = CshoutRiskControlEntity.GetPartitionKey(operationId);
-            var rowKey = CshoutRiskControlEntity.GetRowKey();
+            var partitionKey = CashoutRiskControlEntity.GetPartitionKey(operationId);
+            var rowKey = CashoutRiskControlEntity.GetRowKey();
 
             var startedEntity = await _storage.GetOrInsertAsync(
                 partitionKey,
@@ -41,7 +41,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
                 {
                     var newAggregate = newAggregateFactory();
 
-                    return CshoutRiskControlEntity.FromDomain(newAggregate);
+                    return CashoutRiskControlEntity.FromDomain(newAggregate);
                 });
 
             return startedEntity.ToDomain();
@@ -49,8 +49,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
 
         public async Task<CashoutRiskControlAggregate> TryGetAsync(Guid operationId)
         {
-            var partitionKey = CshoutRiskControlEntity.GetPartitionKey(operationId);
-            var rowKey = CshoutRiskControlEntity.GetRowKey();
+            var partitionKey = CashoutRiskControlEntity.GetPartitionKey(operationId);
+            var rowKey = CashoutRiskControlEntity.GetRowKey();
 
             var entity = await _storage.GetDataAsync(partitionKey, rowKey);
 
@@ -59,7 +59,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl
 
         public async Task SaveAsync(CashoutRiskControlAggregate aggregate)
         {
-            var entity = CshoutRiskControlEntity.FromDomain(aggregate);
+            var entity = CashoutRiskControlEntity.FromDomain(aggregate);
 
             await _storage.ReplaceAsync(entity);
         }
