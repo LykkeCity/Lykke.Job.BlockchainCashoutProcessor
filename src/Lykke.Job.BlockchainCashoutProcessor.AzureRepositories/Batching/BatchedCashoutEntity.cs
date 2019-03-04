@@ -11,6 +11,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
         public Guid ClientId { get; set; }
         public string DestinationAddress { get; set; }
         public decimal Amount { get; set; }
+        public int IndexInBatch { get; set; }
+
+        public DateTime AddedToBatchAt { get; set; }
+
 
         public static BatchedCashoutEntity FromDomain(BatchedCashoutValueType domain)
         {
@@ -19,13 +23,15 @@ namespace Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching
                 OperationId = domain.CashoutId,
                 ClientId = domain.ClientId,
                 DestinationAddress = domain.ToAddress,
-                Amount = domain.Amount
+                Amount = domain.Amount,
+                IndexInBatch = domain.IndexInBatch,
+                AddedToBatchAt = domain.AddedToBatchAt
             };
         }
 
         public BatchedCashoutValueType ToDomain()
         {
-            return new BatchedCashoutValueType(OperationId, ClientId, DestinationAddress, Amount);
+            return new BatchedCashoutValueType(OperationId, ClientId, DestinationAddress, Amount, IndexInBatch, AddedToBatchAt);
         }
     }
 }

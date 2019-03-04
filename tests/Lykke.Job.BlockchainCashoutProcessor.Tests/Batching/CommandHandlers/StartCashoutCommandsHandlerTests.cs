@@ -6,13 +6,11 @@ using System.Threading.Tasks;
 using Lykke.Common.Chaos;
 using Lykke.Cqrs;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching;
-using Lykke.Job.BlockchainCashoutProcessor.Contract.Commands;
 using Lykke.Job.BlockchainCashoutProcessor.Contract.Events;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Services;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
-using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
@@ -230,7 +228,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             for (var i = 0; i < _countTreshold - 2; ++i)
             {
-                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), $"Destination-{i}", 100 * i));
+                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), $"Destination-{i}", 100 * i, i, DateTime.UtcNow));
             }
 
             // Act
@@ -290,7 +288,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             for (var i = 0; i < _countTreshold - 1; ++i)
             {
-                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination-{i}", 100 * i));
+                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination-{i}", 100 * i, i, DateTime.UtcNow));
             }
 
             // Act
@@ -353,7 +351,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             for (var i = 0; i < _countTreshold - 1; ++i)
             {
-                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination-{i}", 100 * i));
+                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination-{i}", 100 * i, i, DateTime.UtcNow));
             }
 
             // Act 1
@@ -638,7 +636,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             for (var i = 0; i < _countTreshold - 2; ++i)
             {
-                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), $"Destination-{i}", 100 * i));
+                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), $"Destination-{i}", 100 * i, i, DateTime.UtcNow));
             }
 
             _batchRepositoryMock
@@ -719,7 +717,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             for (var i = 0; i < _countTreshold - 1; ++i)
             {
-                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination-{i}", 100 * i));
+                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination-{i}", 100 * i, i, DateTime.UtcNow));
             }
 
             _batchRepositoryMock
@@ -776,6 +774,127 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
                     Times.Once
                 );
             _eventsPublisherMock.VerifyNoOtherCalls();
+        }
+
+        [Fact]
+        public async Task BatchFillingStartedEvent_Published_On_Transient_Failure()
+        {
+            // == Step 1 - Failure ==
+
+            // Arrange 1
+
+           _batchRepositoryMock
+                .Setup(x => x.SaveAsync(It.Is<CashoutsBatchAggregate>(p => p.BatchId == _batch.BatchId)))
+                .Throws<InvalidOperationException>();
+
+            // Act  1
+
+            var cashout1Id = Guid.NewGuid();
+            var clientId = Guid.NewGuid();
+
+            var command1 =
+                new AcceptCashoutCommand
+                {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
+                    AssetId = "LykkeBTC",
+                    Amount = 50,
+                    ClientId = clientId,
+                    OperationId = cashout1Id,
+                    HotWalletAddress = "HotWallet",
+                    ToAddress = "Destination-first"
+                };
+            await Assert.ThrowsAsync<InvalidOperationException>(() => _handler.Handle
+            (
+                command1,
+                _eventsPublisherMock.Object
+            ));
+
+            Assert.Equal(1, _batch.Cashouts.Count);
+            Assert.Equal(cashout1Id, _batch.Cashouts.Single().CashoutId);
+            Assert.Equal(0, _batch.Cashouts.Single().IndexInBatch);
+            _eventsPublisherMock.VerifyNoOtherCalls();
+
+            // Assert 2
+
+            _batchRepositoryMock
+                .Setup(x => x.SaveAsync(It.Is<CashoutsBatchAggregate>(p => p.BatchId == _batch.BatchId)))
+                .Returns(Task.CompletedTask);
+            _batchRepositoryMock.Invocations.Clear();
+
+            var cashout2Id  = Guid.NewGuid();
+
+            // Act 2
+
+            await _handler.Handle
+            (
+                new AcceptCashoutCommand
+                {
+                    BlockchainType = "Bitcoin",
+                    BlockchainAssetId = "BTC",
+                    AssetId = "LykkeBTC",
+                    Amount = 50,
+                    ClientId = Guid.NewGuid(),
+                    OperationId = cashout2Id,
+                    HotWalletAddress = "HotWallet",
+                    ToAddress = "Destination-2"
+                },
+                _eventsPublisherMock.Object
+            );
+
+            // Arrange 2
+            Assert.Equal(2, _batch.Cashouts.Count);
+
+            Assert.Equal(cashout2Id, _batch.Cashouts.Single(p=>p.CashoutId == cashout2Id).CashoutId);
+            Assert.Equal(1, _batch.Cashouts.Single(p => p.CashoutId == cashout2Id).IndexInBatch);
+
+            _eventsPublisherMock
+                .Verify
+                (
+                    x => x.PublishEvent
+                    (
+                        It.Is<BatchedCashoutStartedEvent>(p => p.OperationId == cashout2Id )
+                    ),
+                    Times.Once
+                );
+            _eventsPublisherMock.VerifyNoOtherCalls();
+
+
+
+            // Act 3
+
+            await _handler.Handle
+            (
+                command1,
+                _eventsPublisherMock.Object
+            );
+
+            // Arrange 3
+
+            _eventsPublisherMock
+                .Verify
+                (
+                    x => x.PublishEvent
+                    (
+                        It.Is<BatchFillingStartedEvent>(p => p.BatchId == _batch.BatchId)
+                    ),
+                    Times.Once
+                );
+
+            _eventsPublisherMock
+                .Verify
+                (
+                    x => x.PublishEvent
+                    (
+                        It.Is<BatchedCashoutStartedEvent>(p => p.OperationId == cashout1Id)
+                    ),
+                    Times.Once
+                );
+
+            _eventsPublisherMock.VerifyNoOtherCalls();
+
+            Assert.Equal(0, _batch.Cashouts.Single(p => p.CashoutId == cashout1Id).IndexInBatch);
+            Assert.Equal(2, _batch.Cashouts.Count);
         }
 
     }
