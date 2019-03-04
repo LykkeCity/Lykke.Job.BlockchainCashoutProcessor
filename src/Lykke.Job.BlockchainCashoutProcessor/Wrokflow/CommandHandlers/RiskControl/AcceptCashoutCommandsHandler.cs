@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.Common.Chaos;
@@ -104,7 +105,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskCont
 
             _chaosKitty.Meow(command.OperationId);
 
-            var cashout = new BatchedCashoutValueType(command.OperationId, command.ClientId, command.ToAddress, command.Amount);
+            var cashout = batch.Cashouts.SingleOrDefault(p => p.CashoutId == command.OperationId) ??
+                          new BatchedCashoutValueType(command.OperationId, command.ClientId, command.ToAddress, command.Amount, batch.Cashouts.Count, DateTime.UtcNow);
 
             var isCashoutShouldWaitForNextBatch = !(batch.IsStillFillingUp || batch.Cashouts.Contains(cashout));
 
@@ -124,7 +126,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskCont
 
             if (transitionResult.ShouldPublishEvents())
             {
-                if (batch.State == CashoutsBatchState.FillingUp && batch.Cashouts.Count == 1)
+                if (batch.State == CashoutsBatchState.FillingUp && batch.Cashouts.Single(p => p.Equals(cashout)).IndexInBatch == 0)
                 {
                     publisher.PublishEvent
                     (

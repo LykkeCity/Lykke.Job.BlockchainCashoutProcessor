@@ -56,7 +56,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
         {
             // Arrange
 
-            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100));
+            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100, 0, DateTime.UtcNow));
             
             // Act
 
@@ -87,7 +87,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             for (var i = 0; i < _batch.CountThreshold; ++i)
             {
-                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), $"Destination-{i}", 100));
+                _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), $"Destination-{i}", 100, 0, DateTime.UtcNow));
             }
             
             // Act
@@ -116,7 +116,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
         {
             // Arrange
 
-            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100));
+            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100, 0, DateTime.UtcNow));
 
             var batchEntity = CashoutsBatchEntity.FromDomain(_batch);
 
@@ -152,7 +152,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
              
             // Arrange 1
 
-            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100));
+            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100, 0, DateTime.UtcNow));
 
             var batchEntity = CashoutsBatchEntity.FromDomain(_batch);
 
@@ -222,7 +222,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
              
             // Arrange 1
 
-            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100));
+            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100, 0, DateTime.UtcNow));
 
             var batchEntity = CashoutsBatchEntity.FromDomain(_batch);
 
@@ -292,7 +292,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching.CommandHandlers
 
             // Arrange 1
 
-            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100));
+            _batch.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "Destination", 100, 0, DateTime.UtcNow));
 
             var batchEntity = CashoutsBatchEntity.FromDomain(_batch);
 
