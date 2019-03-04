@@ -3,9 +3,11 @@ using Lykke.Common.Log;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.Regular;
+using Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Regular;
+using Lykke.Job.BlockchainCashoutProcessor.Core.Domain.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Core.Repositories;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.SettingsReader;
@@ -46,6 +48,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             builder.Register(c => MatchingEngineCallsDeduplicationRepository.Create(_dbSettings.Nested(x => x.DataConnString), c.Resolve<ILogFactory>()))
                 .As<IMatchingEngineCallsDeduplicationRepository>()
+                .SingleInstance();
+
+            builder.Register(c => CashoutRiskControlRepository.Create(_dbSettings.Nested(x => x.DataConnString), c.Resolve<ILogFactory>()))
+                .As<ICashoutRiskControlRepository>()
                 .SingleInstance();
         }
     }

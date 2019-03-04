@@ -13,8 +13,7 @@ using Lykke.Job.BlockchainOperationsExecutor.Contract;
 namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas
 {
     /// <summary>
-    /// -> Lykke.Job.TransactionsHandler : StartCashoutCommand
-    /// -> CashoutStartedEvent
+    /// -> RiskControlSaga : CashoutStartedEvent
     ///     -> BlockchainOperationsExecutor : StartOperationCommand
     /// -> BlockchainOperationsExecutor : OperationCompletedEvent | OperationFailedEvent
     /// </summary>

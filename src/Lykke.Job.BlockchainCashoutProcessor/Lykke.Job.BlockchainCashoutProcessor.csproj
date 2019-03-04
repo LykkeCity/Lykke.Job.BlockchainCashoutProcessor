@@ -20,6 +20,7 @@
     <PackageReference Include="Lykke.Cqrs" Version="8.1.0" />
     <PackageReference Include="Lykke.Cqrs.MessageCancellation" Version="2.4.1" />
     <PackageReference Include="Lykke.Job.BlockchainOperationsExecutor.Contract" Version="12.0.0" />
+    <PackageReference Include="Lykke.Job.BlockchainRiskControl.Contract" Version="1.0.0" />
     <!-- #if azurequeuesub -->
     <!-- #endif -->
     <PackageReference Include="Lykke.Logs" Version="7.2.1" />
@@ -49,5 +50,8 @@
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.AzureRepositories\Lykke.Job.BlockchainCashoutProcessor.AzureRepositories.csproj" />
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.Core\Lykke.Job.BlockchainCashoutProcessor.Core.csproj" />
     <ProjectReference Include="..\Lykke.Job.BlockchainCashoutProcessor.Services\Lykke.Job.BlockchainCashoutProcessor.Services.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Wrokflow\CommandHandlers\RiskControl\" />
   </ItemGroup>
 </Project>
