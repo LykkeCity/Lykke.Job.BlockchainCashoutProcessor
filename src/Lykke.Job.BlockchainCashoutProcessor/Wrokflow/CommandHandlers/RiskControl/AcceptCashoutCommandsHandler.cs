@@ -126,7 +126,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.CommandHandlers.RiskCont
 
             if (transitionResult.ShouldPublishEvents())
             {
-                if (batch.State == CashoutsBatchState.FillingUp && batch.Cashouts.Single(p => p.Equals(cashout)).IndexInBatch == 0)
+                if (batch.State == CashoutsBatchState.FillingUp && cashout.IndexInBatch == 0)
                 {
                     publisher.PublishEvent
                     (
