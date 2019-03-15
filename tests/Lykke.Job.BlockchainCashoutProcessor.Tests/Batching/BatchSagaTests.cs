@@ -38,9 +38,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.Batching
                 21,
                 TimeSpan.FromDays(1));
 
-            cashoutAggregate.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "hx1...", 1));
-            cashoutAggregate.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "hx1...", 2));
-            cashoutAggregate.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "hx2...", 2));
+            cashoutAggregate.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "hx1...", 1, 1, DateTime.UtcNow));
+            cashoutAggregate.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "hx1...", 2, 1, DateTime.UtcNow));
+            cashoutAggregate.AddCashout(new BatchedCashoutValueType(Guid.NewGuid(), Guid.NewGuid(), "hx2...", 2, 1, DateTime.UtcNow));
 
             cashoutsBatchReadOnlyRepository.Setup(x => x.GetAsync(batchId)).ReturnsAsync(cashoutAggregate);
             var batchSaga = new BatchSaga(chaosKittyMock.Object, cashoutsBatchReadOnlyRepository.Object);

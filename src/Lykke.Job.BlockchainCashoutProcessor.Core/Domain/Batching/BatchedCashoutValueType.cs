@@ -9,12 +9,18 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
         public string ToAddress { get; }
         public decimal Amount { get; }
 
-        public BatchedCashoutValueType(Guid cashoutId, Guid clientId, string toAddress, decimal amount)
+        public int IndexInBatch { get; }
+
+        public DateTime AddedToBatchAt { get; }
+
+        public BatchedCashoutValueType(Guid cashoutId, Guid clientId, string toAddress, decimal amount, int indexInBatch, DateTime addedToBatchAt)
         {
             CashoutId = cashoutId;
             ClientId = clientId;
             ToAddress = toAddress;
             Amount = amount;
+            IndexInBatch = indexInBatch;
+            AddedToBatchAt = addedToBatchAt;
         }
 
         public bool Equals(BatchedCashoutValueType other)
@@ -50,6 +56,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Core.Domain.Batching
                 hashCode = (hashCode * 397) ^ ClientId.GetHashCode();
                 hashCode = (hashCode * 397) ^ (ToAddress != null ? ToAddress.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Amount.GetHashCode();
+                hashCode = (hashCode * 397) ^ IndexInBatch.GetHashCode();
+                hashCode = (hashCode * 397) ^ AddedToBatchAt.GetHashCode();
 
                 return hashCode;
             }
