@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using AsyncFriendlyStackTrace;
@@ -21,7 +20,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 
 namespace Lykke.Job.BlockchainCashoutProcessor
 {
@@ -110,16 +108,12 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                 services.AddHttpClient(HttpClientNames.Opsgenie, client =>
                 {
                     if (appSettings.CurrentValue.Opsgenie == null)
-                    {
-                        client = new Mock<HttpClient>().Object;
-                    }
-                    else
-                    {
-                        client.DefaultRequestHeaders.Accept.Clear();
-                        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("GenieKey", appSettings.CurrentValue.Opsgenie.ApiKey);
-                        client.BaseAddress = new Uri(appSettings.CurrentValue.Opsgenie.ServiceUrl);
-                    }
+                        return;
+
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("GenieKey", appSettings.CurrentValue.Opsgenie.ApiKey);
+                    client.BaseAddress = new Uri(appSettings.CurrentValue.Opsgenie.ServiceUrl);
                 });
 
                 builder.Populate(services);
