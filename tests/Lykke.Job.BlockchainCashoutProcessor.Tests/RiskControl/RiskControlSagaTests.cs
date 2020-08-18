@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Common.Chaos;
@@ -117,7 +118,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Tests.RiskControl
                     It.IsAny<string>()))
                 .ReturnsAsync((Guid?)null);
 
-            _startCashoutCommandsHandler = new StartCashoutCommandsHandler(_logFactory, _blockchainConfigurationProvider, _assetsServiceMock.Object);
+            _startCashoutCommandsHandler = new StartCashoutCommandsHandler(_logFactory, _blockchainConfigurationProvider, _assetsServiceMock.Object, new Mock<IHttpClientFactory>().Object);
 
             _notifyCashoutFailedCommandsHandler = new NotifyCashoutFailedCommandsHandler();
 

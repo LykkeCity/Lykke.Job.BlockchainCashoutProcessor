@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using AsyncFriendlyStackTrace;
 using Autofac;
@@ -91,7 +92,7 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                 var builder = new ContainerBuilder();
 
                 builder.RegisterModule(new JobModule(
-                    appSettings.CurrentValue.Assets, 
+                    appSettings.CurrentValue.Assets,
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.ChaosKitty,
                     appSettings.CurrentValue.MatchingEngineClient));
                 builder.RegisterModule(new RepositoriesModule(
@@ -101,8 +102,19 @@ namespace Lykke.Job.BlockchainCashoutProcessor
                     appSettings.CurrentValue.BlockchainWalletsServiceClient));
                 builder.RegisterModule(new CqrsModule(
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Cqrs,
-                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.Workflow, 
+                    appSettings.CurrentValue.BlockchainCashoutProcessorJob.Workflow,
                     appSettings.CurrentValue.BlockchainCashoutProcessorJob.Batching));
+
+                services.AddHttpClient(HttpClientNames.Opsgenie, client =>
+                {
+                    if (appSettings.CurrentValue.Opsgenie == null)
+                        return;
+
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("GenieKey", appSettings.CurrentValue.Opsgenie.ApiKey);
+                    client.BaseAddress = new Uri(appSettings.CurrentValue.Opsgenie.ServiceUrl);
+                });
 
                 builder.Populate(services);
 
@@ -192,9 +204,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor
             try
             {
                 // NOTE: Job can't recieve and process IsAlive requests here, so you can destroy all resources
-                
+
                 HealthNotifier?.Notify("Terminating");
-                
+
                 ApplicationContainer.Dispose();
             }
             catch (Exception ex)

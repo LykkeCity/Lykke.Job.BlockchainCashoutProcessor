@@ -3,6 +3,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Settings.Assets;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.Blockchain;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.JobSettings;
 using Lykke.Job.BlockchainCashoutProcessor.Settings.SlackNotifications;
+using Lykke.SettingsReader.Attributes;
 
 namespace Lykke.Job.BlockchainCashoutProcessor.Settings
 {
@@ -26,5 +27,9 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Settings
 
         [UsedImplicitly(ImplicitUseKindFlags.Assign)]
         public MatchingEngineSettings MatchingEngineClient { get; set; }
+
+        [Optional]
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        public OpsgenieSettings Opsgenie { get; set; }
     }
 }
