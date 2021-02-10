@@ -22,8 +22,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Interceptors
         {
             try
             {
-                await context.InvokeNextAsync();
-                return CommandHandlingResult.Ok();
+                var result = await context.InvokeNextAsync();
+                return result;
             }
             catch (InvalidAggregateStateException ex)
             {
