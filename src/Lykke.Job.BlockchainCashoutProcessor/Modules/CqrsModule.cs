@@ -20,6 +20,7 @@ using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Commands.RiskControl;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.Batching;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.CrossClient;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Events.RiskControl;
+using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Interceptors;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Projections;
 using Lykke.Job.BlockchainCashoutProcessor.Wrokflow.Sagas;
 using Lykke.Job.BlockchainOperationsExecutor.Contract;
@@ -86,6 +87,10 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
 
             // Projections
             builder.RegisterType<MatchingEngineCallDeduplicationsProjection>();
+
+            // Interceptors
+            builder.RegisterType<ErrorsCommandInterceptor>();
+            builder.RegisterType<ErrorsEventInterceptor>();
 
             //CQRS Message Cancellation
             Lykke.Cqrs.MessageCancellation.Configuration.ContainerBuilderExtensions.RegisterCqrsMessageCancellation(
@@ -193,6 +198,8 @@ namespace Lykke.Job.BlockchainCashoutProcessor.Modules
                 messagingEngine,
                 new DefaultEndpointProvider(),
                 true,
+                Register.CommandInterceptor<ErrorsCommandInterceptor>(),
+                Register.EventInterceptor<ErrorsEventInterceptor>(),
             #region CQRS Message Cancellation
                 Register.CommandInterceptor<MessageCancellationCommandInterceptor>(),
                 Register.EventInterceptor<MessageCancellationEventInterceptor>(),
